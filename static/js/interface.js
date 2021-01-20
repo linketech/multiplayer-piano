@@ -4,11 +4,12 @@
 const socket = io.connect() // socket.io
 const MIDI_CHANNEL = 0
 const MIDI_VOLUME = 127
-const LATCH_MODE = false
-let GAME_OVER = false
+const LATCH_MODE = false // 控制琴键按压后是否保持
+const GAME_OVER = false
 let started = null
 let timer = null
 
+// 读完谱子后才开始加提示（红色背景）
 const attachHintListener = () => socket.on('hint', (notes) => {
 	let note
 	let i
@@ -34,18 +35,7 @@ const init = () => MIDI.loadPlugin({
 	},
 })
 
-const gotit = (text) => {
-	const $el = $('#gotit')
-	$el.text(text)
-	$el.show().css('bottom', '20px').css('opacity', 1)
-	return $el.animate({
-		opacity: 0,
-		bottom: '+=100',
-	}, 1200, 'swing', () => $el.hide())
-}
-
-const updateStatus = (string) => $('.gamestatus').each((i, el) => $(el).text(string))
-
+// 检测按下琴键时的准确度，并显示不同的颜色用以反馈
 const animateProgressBar = (timeout) => {
 	const innerTimeout = timeout - 100
 	started = new Date().getTime()
@@ -69,8 +59,24 @@ const animateProgressBar = (timeout) => {
 	}, 100)
 }
 
+// 此处的文本原文是 `Waiting for server response...`
+const updateStatus = (string) => $('.gamestatus').each((i, el) => $(el).text(string))
+
+// 用于弹出游戏状态的提示，利用了 jq 的动画改变透明度
+const gotit = (text) => {
+	const $el = $('#gotit')
+	$el.text(text)
+	$el.show().css('bottom', '20px').css('opacity', 1)
+	return $el.animate({
+		opacity: 0,
+		bottom: '+=100',
+	}, 1200, 'swing', () => $el.hide())
+}
+
+// 事件监听器的合集在此定义
 const attachListeners = () => {
 	$('.notes span').each((i, el) => {
+		// 钢琴键元素
 		const $el = $(el)
 		$el.mousedown(() => {
 			let note
@@ -82,6 +88,7 @@ const attachListeners = () => {
 						socket.emit('note_off', note)
 						return $el.removeClass('myNote')
 					}
+					// 为什么要重复 emit?
 					MIDI.noteOn(MIDI_CHANNEL, note, MIDI_VOLUME, 0)
 					socket.emit('note_on', note)
 					return $el.addClass('myNote')
@@ -108,14 +115,17 @@ const attachListeners = () => {
 			}
 		})
 	})
+	// 按下琴键的事件
 	socket.on('note_on', (note) => {
 		MIDI.noteOn(MIDI_CHANNEL, note, MIDI_VOLUME, 0)
 		return $(`span[data-note='${note}']`).each((i, el) => $(el).addClass('theirNote'))
 	})
+	// 松开琴键的事件
 	socket.on('note_off', (note) => {
 		MIDI.noteOff(MIDI_CHANNEL, note)
 		return $(`span[data-note='${note}']`).each((i, el) => $(el).removeClass('theirNote'))
 	})
+	// target 事件是后端 emit 给所有玩家的
 	socket.on('target', (target, timeout) => {
 		animateProgressBar(timeout)
 		if (target === 'A' || target === 'E') {
@@ -123,33 +133,15 @@ const attachListeners = () => {
 		}
 		return updateStatus(`Play a ${target} major chord!`)
 	})
+	// gameStart 事件同样是后端 emit 给所有玩家的
 	socket.on('gameStart', () => {
 		gotit('Begin!')
+		// 分享成绩
 		$('.tweetthis').slideUp()
 		return $('.notes .hint').removeClass('hint')
 	})
+	// 游戏结束后根据分数可以发不同的推特，删去以减少复杂度
 	socket.on('gameOver', (level, score) => {
-		let tweet
-		GAME_OVER = true
-		updateStatus(`Game over! Your team played ${level} chords correctly, and scored ${score}.`)
-		tweet = `text=My team just scored ${score} points from ${level} chords at Multiplayer Piano!`
-		if (level === 0) {
-			tweet += ' Boy, we suck.'
-		} else if (level < 5) {
-			tweet += ' Amateurs.'
-		} else if (level < 10) {
-			tweet += ' Dare to dream.'
-		} else {
-			tweet += ' We rule!'
-		}
-		return $('.tweetthis').each((i, el) => {
-			const $el = $('a', el)
-			let link
-			link = $el.attr('href')
-			link = link.replace(/text=([^&]*)/, tweet)
-			$el.attr('href', link)
-			return $(el).slideDown()
-		})
 	})
 	socket.on('gotIt', () => {
 		gotit('Got it!')
