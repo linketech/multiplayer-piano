@@ -75,12 +75,24 @@ const gotit = (text) => {
 
 // 事件监听器的合集在此定义
 const attachListeners = () => {
-	$('.notes span').each((i, el) => {
+	$('.notes section').each((i, el) => {
 		// 钢琴键元素
 		const $el = $(el)
 		$el.mousedown(() => {
 			let note
 			if (!GAME_OVER) {
+				// 实际根据 hint 事件触发
+				// 利用 appendTo 可以添加下落音符
+				const tap = $('<div class="tap"></div>')
+				// tap.css() // 根据节奏调整持续时间
+				tap.appendTo($el)
+				const time = 1000
+				tap.stop().animate({
+					top: '100%',
+				}, time, 'linear', () => {
+					tap.remove()
+				})
+
 				note = $el.data('note')
 				if (LATCH_MODE) {
 					if ($el.hasClass('myNote')) {
@@ -88,10 +100,6 @@ const attachListeners = () => {
 						socket.emit('note_off', note)
 						return $el.removeClass('myNote')
 					}
-					// 为什么要重复 emit?
-					MIDI.noteOn(MIDI_CHANNEL, note, MIDI_VOLUME, 0)
-					socket.emit('note_on', note)
-					return $el.addClass('myNote')
 				}
 				MIDI.noteOn(MIDI_CHANNEL, note, MIDI_VOLUME, 0)
 				socket.emit('note_on', note)

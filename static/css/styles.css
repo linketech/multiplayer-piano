@@ -40,7 +40,7 @@ strong {
     width: 92%;
 }
 
-.notes span {
+.notes section {
     display: block;
     position: relative;
     margin-top: 50px;
@@ -61,7 +61,7 @@ strong {
     box-sizing: border-box;
 }
 
-span.sharps {
+section.sharps {
     min-height: 200px;
     margin-top: 0;
     background-color: black;
@@ -69,7 +69,7 @@ span.sharps {
     z-index: 10;
 }
 
-span.nonoffset {
+section.nonoffset {
     margin-left: 5px;
 }
 
@@ -79,15 +79,15 @@ span.nonoffset {
     max-width: 960px;
 }
 
-span.hint {
+section.hint {
     background-color: #f55;
 }
 
-span.theirNote {
+section.theirNote {
     background-color: #5ff;
 }
 
-span.myNote {
+section.myNote {
     background-color: #ff5;
     color: black;
 }
@@ -148,4 +148,16 @@ span.myNote {
     font-size: 140%;
     background-color: #ff9;
     margin-bottom: 50px;
+}
+
+/* 下落的音符 */
+.tap {
+    width: 50%;
+    /* 音符的长度要根据持续时间改变 */
+    height: 10px;
+    position: absolute;
+    top: -5%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: tomato;
 }
