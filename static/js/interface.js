@@ -75,15 +75,15 @@ const gotit = (text) => {
 
 // 事件监听器的合集在此定义
 const attachListeners = () => {
-	$('.notes section').each((i, el) => {
+	$('.piano-key div').each((i, el) => {
 		// 钢琴键元素
 		const $el = $(el)
 		// 避免长按选中文本
-		$el.bind('contextmenu', (e) => {
+		$el.children().bind('contextmenu', (e) => {
 			e.preventDefault()
 		})
 
-		$el.tap(() => {
+		$el.tapstart(() => {
 			// 利用 appendTo 可以添加下落音符
 			const tap = $('<div class="tap"></div>')
 			// tap.css() // 根据节奏调整持续时间
@@ -95,7 +95,7 @@ const attachListeners = () => {
 				tap.remove()
 			})
 		})
-		$el.taphold(() => {
+		$el.tapend(() => {
 			// 利用 appendTo 可以添加下落音符
 			const tap = $('<div class="tap"></div>')
 			// tap.css() // 根据节奏调整持续时间
@@ -111,18 +111,6 @@ const attachListeners = () => {
 		$el.mousedown(() => {
 			let note
 			if (!GAME_OVER) {
-				// 实际根据 hint 事件触发
-				// 利用 appendTo 可以添加下落音符
-				const tap = $('<div class="tap"></div>')
-				// tap.css() // 根据节奏调整持续时间
-				tap.appendTo($el)
-				const time = 1000
-				tap.stop().animate({
-					top: '100%',
-				}, time, 'linear', () => {
-					tap.remove()
-				})
-
 				note = $el.data('note')
 				if (LATCH_MODE) {
 					if ($el.hasClass('myNote')) {
@@ -194,3 +182,7 @@ $(document).ready(() => {
 	init()
 	return attachListeners()
 })
+
+window.ontouchstart = (e) => {
+	e.preventDefault()
+}

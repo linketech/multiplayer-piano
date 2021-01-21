@@ -1,3 +1,12 @@
+span {
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+
+    -webkit-touch-callout: none
+}
+
 body {
     font-family: “Gill Sans”, “Gill Sans MT”, Calibri, sans-serif;
     line-height: 1.3;
@@ -154,7 +163,7 @@ section.myNote {
 .tap {
     width: 50%;
     /* 音符的长度要根据持续时间改变 */
-    height: 10px;
+    height: 20px;
     position: absolute;
     top: -5%;
     left: 50%;
@@ -166,7 +175,7 @@ section.myNote {
 .piano {
     /* margin: 0 200px; */
     background: linear-gradient(-65deg, #000, #222, #000, #666, #222 75%);
-    /* border-top: .8rem solid #282828; */
+    border: .8rem solid #282828;
     box-shadow: inset 0 -1px 1px hsla(0, 0%, 100%, .5), inset -0.4rem 0.4rem #282828;
     display: flex;
     min-height: 250px;
@@ -175,6 +184,10 @@ section.myNote {
     /* padding-bottom: 2%;
     padding-left: 2.5%;
     padding-right: 2.5%; */
+    margin-bottom: 16px;
+}
+.rotated {
+    transform: rotate(180deg);
 }
 .piano-key {
     /* color: blue; */
@@ -190,7 +203,7 @@ section.myNote {
     box-shadow: inset 0 1px 0 #fff, inset 0 -1px 0 #fff, inset 1px 0 0 #fff, inset -1px 0 0 #fff, 0 4px 3px rgba(0, 0, 0, .7), inset 0 -1px 0 #fff, inset 1px 0 0 #fff, inset -1px -1px 15px rgba(0, 0, 0, .5), -3px 4px 6px rgba(0, 0, 0, .5);
     height: 100%;
     position: relative;
-    color: black;
+    color: gray;
 }
 .piano-key__black {
     display: flex;
@@ -207,5 +220,5 @@ section.myNote {
     top: 0;
     width: 70%;
     z-index: 1;
-    color: white;
+    color: silver;
 }
