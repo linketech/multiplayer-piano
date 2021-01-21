@@ -78,6 +78,36 @@ const attachListeners = () => {
 	$('.notes section').each((i, el) => {
 		// 钢琴键元素
 		const $el = $(el)
+		// 避免长按选中文本
+		$el.bind('contextmenu', (e) => {
+			e.preventDefault()
+		})
+
+		$el.tap(() => {
+			// 利用 appendTo 可以添加下落音符
+			const tap = $('<div class="tap"></div>')
+			// tap.css() // 根据节奏调整持续时间
+			tap.appendTo($el)
+			const time = 1000
+			tap.stop().animate({
+				top: '100%',
+			}, time, 'linear', () => {
+				tap.remove()
+			})
+		})
+		$el.taphold(() => {
+			// 利用 appendTo 可以添加下落音符
+			const tap = $('<div class="tap"></div>')
+			// tap.css() // 根据节奏调整持续时间
+			tap.appendTo($el)
+			const time = 1000
+			tap.stop().animate({
+				top: '100%',
+			}, time, 'linear', () => {
+				tap.remove()
+			})
+		})
+
 		$el.mousedown(() => {
 			let note
 			if (!GAME_OVER) {
