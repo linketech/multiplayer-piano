@@ -88,16 +88,16 @@ section.nonoffset {
     max-width: 960px;
 }
 
-section.hint {
+.hint {
     background-color: #f55;
 }
 
-section.theirNote {
-    background-color: #5ff;
+div.their-note {
+    background: #5ff;
 }
 
-section.myNote {
-    background-color: #ff5;
+div.tapped-note {
+    background: #ff5;
     color: black;
 }
 

@@ -18,6 +18,7 @@ const attachHintListener = () => socket.on('hint', ({ n, d }) => {
 
 		const tap = $('<div class="tap"></div>')
 		tap.css('height', d * 0.05) // 根据节奏调整持续时间
+		tap.css('opacity', 0.5)
 		if (d >= 500) {
 			// 默认短音符是番茄色，长按改为金黄色
 			tap.css('background', 'gold')
@@ -83,60 +84,38 @@ const attachListeners = () => {
 	$('.piano-key div').each((i, el) => {
 		// 钢琴键元素
 		const $el = $(el)
+		const note = $el.data('note')
+		const midiNum = notationToMidi[noteToNotation[note]]
 		// 避免长按选中文本
 		$el.children().bind('contextmenu', (e) => {
 			e.preventDefault()
 		})
 
 		$el.tapstart(() => {
-			// TODO: socket.emit('note_on', note)
+			socket.emit('note_on', midiNum)
+			MIDI.noteOn(MIDI_CHANNEL, midiNum, MIDI_VOLUME, 0)
+			$el.addClass('tapped-note')
 		})
 		$el.tapend(() => {
-			// TODO: socket.emit('note_off', note)
+			socket.emit('note_off', midiNum)
+			$el.removeClass('tapped-note')
 		})
-
-		$el.mousedown(() => {
-			let note
-			if (!GAME_OVER) {
-				note = $el.data('note')
-				if (LATCH_MODE) {
-					if ($el.hasClass('myNote')) {
-						MIDI.noteOff(MIDI_CHANNEL, note, MIDI_VOLUME, 0)
-						socket.emit('note_off', note)
-						return $el.removeClass('myNote')
-					}
-				}
-				MIDI.noteOn(MIDI_CHANNEL, note, MIDI_VOLUME, 0)
-				socket.emit('note_on', note)
-				return $el.addClass('myNote')
-			}
-		})
-		$el.mouseup(() => {
-			let note
-			if (!LATCH_MODE) {
-				note = $el.data('note')
-				socket.emit('note_off', note)
-				return $el.removeClass('myNote')
-			}
-		})
-		return $el.mouseout(() => {
-			let note
-			if (!LATCH_MODE) {
-				note = $el.data('note')
-				socket.emit('note_off', note)
-				return $el.removeClass('myNote')
-			}
+		$el.tapmove(() => {
+			socket.emit('note_off', midiNum)
+			$el.removeClass('tapped-note')
 		})
 	})
 	// 按下琴键的事件
-	socket.on('note_on', (note) => {
-		MIDI.noteOn(MIDI_CHANNEL, note, MIDI_VOLUME, 0)
-		return $(`span[data-note='${note}']`).each((i, el) => $(el).addClass('theirNote'))
+	socket.on('note_on', (midiNum) => {
+		MIDI.noteOn(MIDI_CHANNEL, midiNum, MIDI_VOLUME, 0)
+		const note = notationToNote[MidiToNotation[midiNum]]
+		$(`div[data-note='${note}']`).each((i, el) => $(el).addClass('their-note'))
 	})
 	// 松开琴键的事件
-	socket.on('note_off', (note) => {
-		MIDI.noteOff(MIDI_CHANNEL, note)
-		return $(`span[data-note='${note}']`).each((i, el) => $(el).removeClass('theirNote'))
+	socket.on('note_off', (midiNum) => {
+		// MIDI.noteOff(MIDI_CHANNEL, midiNum)
+		const note = notationToNote[MidiToNotation[midiNum]]
+		$(`div[data-note='${note}']`).each((i, el) => $(el).removeClass('their-note'))
 	})
 	// target 事件是后端 emit 给所有玩家的
 	socket.on('target', (target, timeout) => {
@@ -158,9 +137,9 @@ const attachListeners = () => {
 	})
 	socket.on('gotIt', () => {
 		gotit('Got it!')
-		$('.notes .myNote').removeClass('myNote')
+		$('.notes .tapped-note').removeClass('tapped-note')
 		$('.notes .hint').removeClass('hint')
-		return $('.notes .theirNote').removeClass('theirNote')
+		return $('.notes .their-note').removeClass('their-note')
 	})
 	return socket.on('waiting', (you, total) => updateStatus(`Waiting for other players (you are player ${you} of ${total} needed)...`))
 }
