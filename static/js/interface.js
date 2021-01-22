@@ -26,18 +26,18 @@ const attachHintListener = () => socket.on('hint', ({ n, d }) => {
 		const note = notationToNote[MidiToNotation[n]]
 		const $key = $(`.piano-key div[data-note=${note}]`)
 
-		const fallingTap = $('<div class="tap"></div>')
-		fallingTap.css('height', d * 0.05) // 根据节奏调整持续时间
-		fallingTap.css('opacity', 0.5)
+		const $fallingTap = $('<div class="tap"></div>')
+		$fallingTap.css('height', d * 0.05) // 根据节奏调整持续时间
+		$fallingTap.css('opacity', 0.5)
 		if (d >= 500) {
 			// 默认短音符是番茄色，长按改为金黄色
-			fallingTap.css('background', 'gold')
+			$fallingTap.css('background', 'gold')
 		}
-		fallingTap.appendTo($key)
-		fallingTap.stop().animate({
+		$fallingTap.appendTo($key)
+		$fallingTap.stop().animate({
 			top: '100%',
 		}, 4000, 'linear', () => {
-			fallingTap.remove()
+			$fallingTap.remove()
 		})
 
 		// TODO: cheat: 4s 后自动播放
@@ -79,19 +79,29 @@ const attachListeners = (name) => {
 			$el.addClass('tapped-note')
 		})
 		$el.tapend(() => {
-			socket.emit('note_off', midiNum, name)
+			socket.emit('note_off', midiNum)
 			$el.removeClass('tapped-note')
 		})
 		$el.tapmove(() => {
-			socket.emit('note_off', midiNum, name)
+			socket.emit('note_off', midiNum)
 			$el.removeClass('tapped-note')
 		})
 	})
 	// 接收到按下琴键的事件
-	socket.on('note_on', (midiNum) => {
+	socket.on('note_on', (midiNum, theirName) => {
 		MIDI.noteOn(MIDI_CHANNEL, midiNum, MIDI_VOLUME, 0)
 		const note = notationToNote[MidiToNotation[midiNum]]
-		$(`div[data-note='${note}']`).each((i, el) => $(el).addClass('their-note'))
+		const $note = $(`div[data-note='${note}']`)
+		$note.each((i, el) => $(el).addClass('their-note'))
+
+		const $name = $(`<div>${theirName}</div>`).css('color', 'red')
+			.css('opacity', '1')
+		$name.appendTo($note)
+		$name.animate({
+			opacity: '0',
+		}, 500, 'linear', () => {
+			$name.remove()
+		})
 	})
 	// 接收到松开琴键的事件
 	socket.on('note_off', (midiNum) => {
