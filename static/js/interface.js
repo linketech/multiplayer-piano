@@ -8,22 +8,27 @@ const LATCH_MODE = false // 控制琴键按压后是否保持
 const GAME_OVER = false
 let started = null
 let timer = null
+window.socket = socket
 
 // 读完谱子后才开始加提示（红色背景）
-const attachHintListener = () => socket.on('hint', (notes) => {
-	let note
-	let i
-	let len
-	const results = []
-	for (i = 0, len = notes.length; i < len; i += 1) {
-		note = notes[i]
-		// eslint-disable-next-line no-loop-func
-		results.push($(`.notes span[data-note-name='${note}']`).each((j, el) => {
-			$(el).addClass('hint')
-			return MIDI.noteOn(MIDI_CHANNEL, $(el).data('note'), MIDI_VOLUME, 0)
-		}))
+const attachHintListener = () => socket.on('hint', ({ n, d }) => {
+	if (n) {
+		const note = notationToNote[MidiToNotation[n]]
+		const $el = $(`.piano-key div[data-note=${note}]`)
+
+		const tap = $('<div class="tap"></div>')
+		tap.css('height', d * 0.05) // 根据节奏调整持续时间
+		if (d >= 500) {
+			// 默认短音符是番茄色，长按改为金黄色
+			tap.css('background', 'gold')
+		}
+		tap.appendTo($el)
+		tap.stop().animate({
+			top: '100%',
+		}, 4000, 'linear', () => {
+			tap.remove()
+		})
 	}
-	return results
 })
 
 const init = () => MIDI.loadPlugin({
@@ -84,28 +89,10 @@ const attachListeners = () => {
 		})
 
 		$el.tapstart(() => {
-			// 利用 appendTo 可以添加下落音符
-			const tap = $('<div class="tap"></div>')
-			// tap.css() // 根据节奏调整持续时间
-			tap.appendTo($el)
-			const time = 1000
-			tap.stop().animate({
-				top: '100%',
-			}, time, 'linear', () => {
-				tap.remove()
-			})
+			// TODO: socket.emit('note_on', note)
 		})
 		$el.tapend(() => {
-			// 利用 appendTo 可以添加下落音符
-			const tap = $('<div class="tap"></div>')
-			// tap.css() // 根据节奏调整持续时间
-			tap.appendTo($el)
-			const time = 1000
-			tap.stop().animate({
-				top: '100%',
-			}, time, 'linear', () => {
-				tap.remove()
-			})
+			// TODO: socket.emit('note_off', note)
 		})
 
 		$el.mousedown(() => {

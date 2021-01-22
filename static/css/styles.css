@@ -165,7 +165,7 @@ section.myNote {
     /* 音符的长度要根据持续时间改变 */
     height: 20px;
     position: absolute;
-    top: -5%;
+    top: -100%;
     left: 50%;
     transform: translateX(-50%);
     background: tomato;

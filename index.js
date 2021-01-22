@@ -195,5 +195,6 @@ app.get('/', (req, res) => fs.createReadStream('./views/index.html').pipe(res))
 socketio.listen(server).sockets.on('connection', (socket) => {
 	gameServer.addPlayer(socket)
 	socket.on('note_on', (note) => socket.broadcast.emit('note_on', note))
+	socket.on('hint', (obj) => socket.broadcast.emit('hint', obj))
 	return socket.on('note_off', (note) => socket.broadcast.emit('note_off', note))
 })

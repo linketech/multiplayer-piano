@@ -18,6 +18,7 @@
         <script src="/static/js/vendor/MIDIinc/Base64.js" type="text/javascript"></script>
         <script src="/static/js/vendor/MIDIinc/base64binary.js" type="text/javascript"></script>
 
+        <script src="/static/js/note-map.js"></script>
         <script src="/static/js/interface.js"></script>
     </head>
     <body>
@@ -38,6 +39,12 @@
             <!-- <p class="tweetthis" style="display: none;"><a href="http://twitter.com/share?url=http://multiplayerpiano.herokuapp.com/&text=Somehow I found the Tweet link before playing a game of multiplayer piano!&related=acreature" target="_blank">Tweet your score!</a></p> -->
 
             <div class="piano rotated">
+                <!-- 为了上下平衡，故需要一个占位琴键 -->
+                <div class="piano-key">
+                    <div class="piano-key__white" data-note="B1"><span class="piano-note">B1</span></div>
+                    <div class="piano-key__black" style="display: none;"><span class="piano-note"></span></div>
+                </div>
+
                 <div class="piano-key">
                     <div class="piano-key__white" data-note="C2"><span class="piano-note">C2</span></div>
                     <div class="piano-key__black" data-note="C#2" style="display: block;"><span class="piano-note">C#2</span></div>
@@ -160,6 +167,11 @@
                     <div class="piano-key__white" data-note="B5"><span class="piano-note">B5</span></div>
                     <div class="piano-key__black" style="display: none;"><span class="piano-note"></span>
                     </div>
+                </div>
+                <!-- 敢问路在何方必须要多一个音 -->
+                <div class="piano-key">
+                    <div class="piano-key__white" data-note="C6"><span class="piano-note">C6</span></div>
+                    <div class="piano-key__black" data-note="C#6" style="display: block;"><span class="piano-note">C#6</span></div>
                 </div>
             </div>
 
