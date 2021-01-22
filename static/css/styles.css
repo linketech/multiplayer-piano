@@ -222,3 +222,11 @@ div.tapped-note {
     z-index: 1;
     color: silver;
 }
+
+footer {
+    display: flex;
+    justify-content: space-around;
+}
+.start {
+    display: none;
+}
