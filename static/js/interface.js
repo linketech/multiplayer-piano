@@ -10,25 +10,35 @@ let started = null
 let timer = null
 window.socket = socket
 
+const sleep = (t) => new Promise((rs) => setTimeout(rs, t))
 // 读完谱子后才开始加提示（红色背景）
 const attachHintListener = () => socket.on('hint', ({ n, d }) => {
 	if (n) {
 		const note = notationToNote[MidiToNotation[n]]
-		const $el = $(`.piano-key div[data-note=${note}]`)
+		const $key = $(`.piano-key div[data-note=${note}]`)
 
-		const tap = $('<div class="tap"></div>')
-		tap.css('height', d * 0.05) // 根据节奏调整持续时间
-		tap.css('opacity', 0.5)
+		const fallingTap = $('<div class="tap"></div>')
+		fallingTap.css('height', d * 0.05) // 根据节奏调整持续时间
+		fallingTap.css('opacity', 0.5)
 		if (d >= 500) {
 			// 默认短音符是番茄色，长按改为金黄色
-			tap.css('background', 'gold')
+			fallingTap.css('background', 'gold')
 		}
-		tap.appendTo($el)
-		tap.stop().animate({
+		fallingTap.appendTo($key)
+		fallingTap.stop().animate({
 			top: '100%',
 		}, 4000, 'linear', () => {
-			tap.remove()
+			fallingTap.remove()
 		})
+
+		// TODO: cheat: 4s 后自动播放
+
+		// (async () => {
+		// 	await sleep(4000)
+		// 	$key.tapstart()
+		// 	await sleep(500)
+		// 	$key.tapend()
+		// })()
 	}
 })
 
