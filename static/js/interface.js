@@ -15,6 +15,7 @@ const handleName = () => {
 	$('.username').append(name)
 	if (name === '观众') {
 		$('.start').css('display', 'block')
+			.tap(() => socket.emit('start'))
 	}
 	return name
 }
