@@ -2,9 +2,10 @@
 /* eslint-disable consistent-return */
 
 const socket = io.connect() // socket.io
+window.socket = socket
 const MIDI_CHANNEL = 0
 const MIDI_VOLUME = 127
-window.socket = socket
+const shownKeys = new Set()
 
 // 进入页面时必须先输入用户名
 const handleName = () => {
@@ -20,31 +21,57 @@ const handleName = () => {
 	return name
 }
 
-const shownKeys = new Set()
+// 用于生成 dom
 const generateKeyNote = (whiteKey, blackKey) => `<div class="piano-key">
 		<div class="piano-key__white" data-note="${whiteKey}"><span class="piano-note">${whiteKey}</span></div>
 		<div class="piano-key__black" data-note="${blackKey || ''}" style="display: ${blackKey ? 'block' : 'none'};"><span class="piano-note">${blackKey || ''}</span></div>
 </div>`
 
-const generatePiano = (keys) => {
+// 根据已选中复选框的值生成所需琴键
+const generatePiano = (keys, username) => {
 	const $piano = $('.piano').first()
-	$piano.empty()
+	$piano.empty() // 清空状态以便重新生成
 	pianoKeys.forEach(({ white, black }) => {
 		if (keys.includes(white.name) || keys.includes(black.name)) {
 			const keyNote = generateKeyNote(white.name, black.name)
 			const $keyNote = $(keyNote)
-			// TODO: 绑定触发器
+			const blackWhiteDom = [...$keyNote.children()]
+			// 绑定触发器
+			blackWhiteDom.forEach((pianoKey) => {
+				const $pianoKey = $(pianoKey)
+				const note = $pianoKey.data('note')
+				const midiNum = notationToMidi[noteToNotation[note]]
+				// 避免长按选中文本
+				$pianoKey.children().bind('contextmenu', (e) => {
+					e.preventDefault()
+				})
+
+				$pianoKey.tapstart(() => {
+					socket.emit('note_on', midiNum, username)
+					MIDI.noteOn(MIDI_CHANNEL, midiNum, MIDI_VOLUME, 0)
+					$pianoKey.addClass('tapped-note')
+				})
+				$pianoKey.tapend(() => {
+					socket.emit('note_off', midiNum)
+					$pianoKey.removeClass('tapped-note')
+				})
+				$pianoKey.tapmove(() => {
+					socket.emit('note_off', midiNum)
+					$pianoKey.removeClass('tapped-note')
+				})
+			})
+
 			$keyNote.appendTo($piano)
 		}
 	})
 }
 
+// 给观众生成的，只发声与显示按下的只读型钢琴
 const generateFullPiano = () => {
 	const $piano = $('.piano').first()
 	pianoKeys.forEach(({ white, black }) => {
 		const keyNote = generateKeyNote(white.name, black.name)
-		const $keyNote = $(keyNote)
-		$keyNote.appendTo($piano)
+		$(keyNote).appendTo($piano)
 	})
 }
 
@@ -54,26 +81,27 @@ const generateCheckbox = (name) => {
 		return
 	}
 	const $options = $('<div class="options"></div>')
+	// 根据谱子中出现的音符来生成选项
 	Object.keys(noteToNotation).forEach((note) => {
 		const checkbox = `<input type="checkbox" id="${note}" value="${note}">
-			<label for="${note}">${note}</label>`
+			<label for="${note}">${note}</label>
+			<br/>`
 		const $checkbox = $(checkbox)
+		// 通过复选与否来生成琴键
 		$checkbox.change(function () {
 			if (this.checked) {
 				shownKeys.add(this.value)
 			} else {
 				shownKeys.delete(this.value)
 			}
-			generatePiano([...shownKeys])
+			generatePiano([...shownKeys], name)
 		})
-		const $paragraph = $('<p></p>')
-		$checkbox.appendTo($paragraph)
-		$paragraph.appendTo($options)
+		$checkbox.appendTo($options)
 	})
 	$options.appendTo($('footer'))
 }
 
-// 触发时开始下落音符
+// 监听下落提示，需要在下落提示持续时间内按下琴键
 const attachHintListener = () => socket.on('hint', ({ n, d }) => {
 	if (n) {
 		const note = notationToNote[MidiToNotation[n]]
@@ -114,39 +142,16 @@ const init = () => MIDI.loadPlugin({
 	},
 })
 
-// 事件监听器的合集在此定义
-const attachListeners = (name) => {
-	$('.piano-key div').each((i, el) => {
-		// 钢琴键元素
-		const $el = $(el)
-		const note = $el.data('note')
-		const midiNum = notationToMidi[noteToNotation[note]]
-		// 避免长按选中文本
-		$el.children().bind('contextmenu', (e) => {
-			e.preventDefault()
-		})
-
-		$el.tapstart(() => {
-			socket.emit('note_on', midiNum, name)
-			MIDI.noteOn(MIDI_CHANNEL, midiNum, MIDI_VOLUME, 0)
-			$el.addClass('tapped-note')
-		})
-		$el.tapend(() => {
-			socket.emit('note_off', midiNum)
-			$el.removeClass('tapped-note')
-		})
-		$el.tapmove(() => {
-			socket.emit('note_off', midiNum)
-			$el.removeClass('tapped-note')
-		})
-	})
-	// 接收到按下琴键的事件
+// 此处只保留 socket 监听器，琴键触发器在生成时定义
+const attachListeners = () => {
+	// 接收到其他人按下琴键的广播
 	socket.on('note_on', (midiNum, theirName) => {
 		MIDI.noteOn(MIDI_CHANNEL, midiNum, MIDI_VOLUME, 0)
 		const note = notationToNote[MidiToNotation[midiNum]]
 		const $note = $(`div[data-note='${note}']`)
+		// 添加其他人按下琴键时的反馈
 		$note.each((i, el) => $(el).addClass('their-note'))
-
+		// 显示触发者的用户名并消失
 		const $name = $(`<div>${theirName}</div>`).css('color', 'red')
 			.css('opacity', '1')
 		$name.appendTo($note)
@@ -156,9 +161,9 @@ const attachListeners = (name) => {
 			$name.remove()
 		})
 	})
-	// 接收到松开琴键的事件
+	// 接收到其他人松开琴键的广播
 	socket.on('note_off', (midiNum) => {
-		// MIDI.noteOff(MIDI_CHANNEL, midiNum)
+		// MIDI.noteOff(MIDI_CHANNEL, midiNum) // 不需要区分长按与点击
 		const note = notationToNote[MidiToNotation[midiNum]]
 		$(`div[data-note='${note}']`).each((i, el) => $(el).removeClass('their-note'))
 	})
@@ -168,7 +173,7 @@ $(document).ready(() => {
 	const name = handleName()
 	generateCheckbox(name)
 	init()
-	attachListeners(name)
+	attachListeners()
 	// 阻止长按选中文字
 	window.ontouchstart = (e) => {
 		e.preventDefault()
