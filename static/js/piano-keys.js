@@ -8,7 +8,7 @@ pianoKeys = [
 		white: { name: 'D2' },
 	},
 	{
-		black: { name: null, },
+		black: { name: null },
 		white: { name: 'E2' },
 	},
 	{
@@ -24,7 +24,7 @@ pianoKeys = [
 		white: { name: 'A2' },
 	},
 	{
-		black: { name: null, },
+		black: { name: null },
 		white: { name: 'B2' },
 	},
 	{
@@ -36,7 +36,7 @@ pianoKeys = [
 		white: { name: 'D3' },
 	},
 	{
-		black: { name: null, },
+		black: { name: null },
 		white: { name: 'E3' },
 	},
 	{
@@ -52,7 +52,7 @@ pianoKeys = [
 		white: { name: 'A3' },
 	},
 	{
-		black: { name: null, },
+		black: { name: null },
 		white: { name: 'B3' },
 	},
 	{
@@ -64,7 +64,7 @@ pianoKeys = [
 		white: { name: 'D4' },
 	},
 	{
-		black: { name: null, },
+		black: { name: null },
 		white: { name: 'E4' },
 	},
 	{
@@ -80,7 +80,7 @@ pianoKeys = [
 		white: { name: 'A4' },
 	},
 	{
-		black: { name: null, },
+		black: { name: null },
 		white: { name: 'B4' },
 	},
 	{
@@ -92,7 +92,7 @@ pianoKeys = [
 		white: { name: 'D5' },
 	},
 	{
-		black: { name: null, },
+		black: { name: null },
 		white: { name: 'E5' },
 	},
 	{
@@ -108,7 +108,7 @@ pianoKeys = [
 		white: { name: 'A5' },
 	},
 	{
-		black: { name: null, },
+		black: { name: null },
 		white: { name: 'B5' },
 	},
 	{

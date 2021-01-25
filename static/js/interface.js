@@ -20,21 +20,57 @@ const handleName = () => {
 	return name
 }
 
-const generateKeyNote = (whiteKey, blackKey) => {
-	return `<div class="piano-key">
+const shownKeys = new Set()
+const generateKeyNote = (whiteKey, blackKey) => `<div class="piano-key">
 		<div class="piano-key__white" data-note="${whiteKey}"><span class="piano-note">${whiteKey}</span></div>
 		<div class="piano-key__black" data-note="${blackKey || ''}" style="display: ${blackKey ? 'block' : 'none'};"><span class="piano-note">${blackKey || ''}</span></div>
 </div>`
+
+const generatePiano = (keys) => {
+	const $piano = $('.piano').first()
+	$piano.empty()
+	pianoKeys.forEach(({ white, black }) => {
+		if (keys.includes(white.name) || keys.includes(black.name)) {
+			const keyNote = generateKeyNote(white.name, black.name)
+			const $keyNote = $(keyNote)
+			// TODO: 绑定触发器
+			$keyNote.appendTo($piano)
+		}
+	})
 }
 
-// TODO: 根据选项调整视图
-const generatePiano = (name) => {
+const generateFullPiano = () => {
 	const $piano = $('.piano').first()
-	const keyNotes = pianoKeys.map(({white, black}, index) => {
+	pianoKeys.forEach(({ white, black }) => {
 		const keyNote = generateKeyNote(white.name, black.name)
 		const $keyNote = $(keyNote)
 		$keyNote.appendTo($piano)
 	})
+}
+
+const generateCheckbox = (name) => {
+	if (name === '观众') {
+		generateFullPiano()
+		return
+	}
+	const $options = $('<div class="options"></div>')
+	Object.keys(noteToNotation).forEach((note) => {
+		const checkbox = `<input type="checkbox" id="${note}" value="${note}">
+			<label for="${note}">${note}</label>`
+		const $checkbox = $(checkbox)
+		$checkbox.change(function () {
+			if (this.checked) {
+				shownKeys.add(this.value)
+			} else {
+				shownKeys.delete(this.value)
+			}
+			generatePiano([...shownKeys])
+		})
+		const $paragraph = $('<p></p>')
+		$checkbox.appendTo($paragraph)
+		$paragraph.appendTo($options)
+	})
+	$options.appendTo($('footer'))
 }
 
 // 触发时开始下落音符
@@ -130,7 +166,7 @@ const attachListeners = (name) => {
 
 $(document).ready(() => {
 	const name = handleName()
-	generatePiano(name)
+	generateCheckbox(name)
 	init()
 	attachListeners(name)
 	// 阻止长按选中文字
