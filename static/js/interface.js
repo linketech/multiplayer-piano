@@ -50,6 +50,27 @@ const generatePiano = (keys, username) => {
 					socket.emit('note_on', midiNum, username)
 					MIDI.noteOn(MIDI_CHANNEL, midiNum, MIDI_VOLUME, 0)
 					$pianoKey.addClass('tapped-note')
+					if ($pianoKey.children('div.tap').length > 0) {
+						// 隐藏下落音符以反馈演奏者
+						const $fallingTap = $pianoKey.children('div.tap').first()
+						$fallingTap.stop().animate({
+							opacity: '0',
+						}, 500, 'linear', () => {
+							$fallingTap.remove()
+						})
+
+						// 瞎加了一个反馈，以代替判断准确率
+						const randomIndex = Math.floor(Math.random() * (congratulations.length))
+						const congratulation = congratulations[randomIndex]
+						const $congratulation = $(`<div>${congratulation}</div>`).css('color', 'darkgoldenrod')
+							.css('opacity', '1')
+						$congratulation.appendTo($pianoKey)
+						$congratulation.animate({
+							opacity: '0',
+						}, 500, 'linear', () => {
+							$congratulation.remove()
+						})
+					}
 				})
 				$pianoKey.tapend(() => {
 					socket.emit('note_off', midiNum)
@@ -102,8 +123,8 @@ const generateCheckbox = (name) => {
 }
 
 // 监听下落提示，需要在下落提示持续时间内按下琴键
-const attachHintListener = () => socket.on('hint', ({ n, d }) => {
-	if (n) {
+const attachHintListener = (name) => socket.on('hint', ({ n, d }) => {
+	if (n && name !== '观众') {
 		const note = notationToNote[MidiToNotation[n]]
 		const $key = $(`.piano-key div[data-note=${note}]`)
 
@@ -115,30 +136,24 @@ const attachHintListener = () => socket.on('hint', ({ n, d }) => {
 			$fallingTap.css('background', 'gold')
 		}
 		$fallingTap.appendTo($key)
+		// 通过调整 top 属性来实现下落过程
 		$fallingTap.stop().animate({
 			top: '100%',
 		}, 4000, 'linear', () => {
 			$fallingTap.remove()
 		})
 
-		// TODO: 消消乐: 4s 后自动播放
-
-		// const sleep = (t) => new Promise((rs) => setTimeout(rs, t))
-		// (async () => {
-		// 	await sleep(4000)
-		// 	$key.tapstart()
-		// 	await sleep(500)
-		// 	$key.tapend()
-		// })()
+		// TODO: 在 hint 的 4 秒内若按下了这个键，则像服务器发送 note_on 的指令
+		// 注意要去掉 note_off 的 css
 	}
 })
 
-const init = () => MIDI.loadPlugin({
+const init = (name) => MIDI.loadPlugin({
 	soundfontUrl: '/static/soundfonts/',
 	instrument: 'acoustic_grand_piano',
 	callback() {
 		MIDI.setVolume(MIDI_CHANNEL, MIDI_VOLUME)
-		return attachHintListener()
+		return attachHintListener(name)
 	},
 })
 
@@ -152,7 +167,7 @@ const attachListeners = () => {
 		// 添加其他人按下琴键时的反馈
 		$note.each((i, el) => $(el).addClass('their-note'))
 		// 显示触发者的用户名并消失
-		const $name = $(`<div>${theirName}</div>`).css('color', 'red')
+		const $name = $(`<div>${theirName}</div>`).css('color', 'darkgoldenrod')
 			.css('opacity', '1')
 		$name.appendTo($note)
 		$name.animate({
@@ -172,7 +187,7 @@ const attachListeners = () => {
 $(document).ready(() => {
 	const name = handleName()
 	generateCheckbox(name)
-	init()
+	init(name)
 	attachListeners()
 	// 阻止长按选中文字
 	window.ontouchstart = (e) => {
