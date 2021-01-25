@@ -204,6 +204,7 @@ div.tapped-note {
     height: 100%;
     position: relative;
     color: gray;
+    text-align: center;
 }
 .piano-key__black {
     display: flex;
@@ -221,6 +222,7 @@ div.tapped-note {
     width: 70%;
     z-index: 1;
     color: silver;
+    text-align: center;
 }
 
 footer {

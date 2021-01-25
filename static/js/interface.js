@@ -20,6 +20,23 @@ const handleName = () => {
 	return name
 }
 
+const generateKeyNote = (whiteKey, blackKey) => {
+	return `<div class="piano-key">
+		<div class="piano-key__white" data-note="${whiteKey}"><span class="piano-note">${whiteKey}</span></div>
+		<div class="piano-key__black" data-note="${blackKey || ''}" style="display: ${blackKey ? 'block' : 'none'};"><span class="piano-note">${blackKey || ''}</span></div>
+</div>`
+}
+
+// TODO: 根据选项调整视图
+const generatePiano = (name) => {
+	const $piano = $('.piano').first()
+	const keyNotes = pianoKeys.map(({white, black}, index) => {
+		const keyNote = generateKeyNote(white.name, black.name)
+		const $keyNote = $(keyNote)
+		$keyNote.appendTo($piano)
+	})
+}
+
 // 触发时开始下落音符
 const attachHintListener = () => socket.on('hint', ({ n, d }) => {
 	if (n) {
@@ -40,7 +57,7 @@ const attachHintListener = () => socket.on('hint', ({ n, d }) => {
 			$fallingTap.remove()
 		})
 
-		// TODO: cheat: 4s 后自动播放
+		// TODO: 消消乐: 4s 后自动播放
 
 		// const sleep = (t) => new Promise((rs) => setTimeout(rs, t))
 		// (async () => {
@@ -113,6 +130,7 @@ const attachListeners = (name) => {
 
 $(document).ready(() => {
 	const name = handleName()
+	generatePiano(name)
 	init()
 	attachListeners(name)
 	// 阻止长按选中文字
