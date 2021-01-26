@@ -6,6 +6,7 @@ window.socket = socket
 const MIDI_CHANNEL = 0
 const MIDI_VOLUME = 127
 const shownKeys = new Set()
+const hintQueue = []
 
 // 进入页面时必须先输入用户名
 const handleName = () => {
@@ -28,7 +29,7 @@ const generateKeyNote = (whiteKey, blackKey) => `<div class="piano-key">
 </div>`
 
 // 根据已选中复选框的值生成所需琴键
-const generatePiano = (keys, username) => {
+const generatePiano = (keys) => {
 	const $piano = $('.piano').first()
 	$piano.empty() // 清空状态以便重新生成
 	pianoKeys.forEach(({ white, black }) => {
@@ -47,29 +48,42 @@ const generatePiano = (keys, username) => {
 				})
 
 				$pianoKey.tapstart(() => {
-					socket.emit('note_on', midiNum, username)
-					MIDI.noteOn(MIDI_CHANNEL, midiNum, MIDI_VOLUME, 0)
 					$pianoKey.addClass('tapped-note')
 					if ($pianoKey.children('div.tap').length > 0) {
-						// 隐藏下落音符以反馈演奏者
 						const $fallingTap = $pianoKey.children('div.tap').first()
+						const tapTop = $fallingTap.css('top').split('px').length
+							? Number($fallingTap.css('top').split('px')[0]) : -1
+						if (tapTop < 0) {
+							// 防止乱弹
+							return
+						}
+						// 隐藏下落音符以反馈演奏者
 						$fallingTap.stop().animate({
 							opacity: '0',
 						}, 500, 'linear', () => {
 							$fallingTap.remove()
 						})
 
-						// 瞎加了一个反馈，以代替判断准确率
-						const randomIndex = Math.floor(Math.random() * (congratulations.length))
-						const congratulation = congratulations[randomIndex]
-						const $congratulation = $(`<div>${congratulation}</div>`).css('color', 'darkgoldenrod')
-							.css('opacity', '1')
-						$congratulation.appendTo($pianoKey)
-						$congratulation.animate({
-							opacity: '0',
-						}, 500, 'linear', () => {
-							$congratulation.remove()
-						})
+						// 更改 flag
+						for (let index = 0; index < hintQueue.length; index += 1) {
+							const hint = hintQueue[index]
+							if (hint.n === midiNum) {
+								hint.flag = true
+								break
+							}
+						}
+
+						// // 瞎加了一个反馈，以代替判断准确率
+						// const randomIndex = Math.floor(Math.random() * (congratulations.length))
+						// const congratulation = congratulations[randomIndex]
+						// const $congratulation = $(`<div>${congratulation}</div>`).css('color', 'darkgoldenrod')
+						// 	.css('opacity', '1')
+						// $congratulation.appendTo($pianoKey)
+						// $congratulation.animate({
+						// 	opacity: '0',
+						// }, 500, 'linear', () => {
+						// 	$congratulation.remove()
+						// })
 					}
 				})
 				$pianoKey.tapend(() => {
@@ -115,7 +129,7 @@ const generateCheckbox = (name) => {
 			} else {
 				shownKeys.delete(this.value)
 			}
-			generatePiano([...shownKeys], name)
+			generatePiano([...shownKeys])
 		})
 		$checkbox.appendTo($options)
 	})
@@ -143,8 +157,16 @@ const attachHintListener = (name) => socket.on('hint', ({ n, d }) => {
 			$fallingTap.remove()
 		})
 
-		// TODO: 在 hint 的 4 秒内若按下了这个键，则像服务器发送 note_on 的指令
-		// 注意要去掉 note_off 的 css
+		// 在 hint 的 4 秒内若按下了这个键，则更改 flag，向服务器发送 note_on 的指令
+		hintQueue.push({ n, flag: false })
+		const timeoutId = setTimeout(() => {
+			const { flag } = hintQueue.shift()
+			if (flag) {
+				socket.emit('note_on', n, name)
+			}
+			MIDI.noteOn(MIDI_CHANNEL, n, MIDI_VOLUME, 0)
+			clearTimeout(timeoutId)
+		}, 4000)
 	}
 })
 
@@ -165,7 +187,14 @@ const attachListeners = () => {
 		const note = notationToNote[MidiToNotation[midiNum]]
 		const $note = $(`div[data-note='${note}']`)
 		// 添加其他人按下琴键时的反馈
-		$note.each((i, el) => $(el).addClass('their-note'))
+		$note.each((i, el) => {
+			$(el).addClass('their-note')
+			// 自动去掉 note_off 的 css
+			const timeoutId = setTimeout(() => {
+				$(el).removeClass('their-note')
+				clearTimeout(timeoutId)
+			}, 500)
+		})
 		// 显示触发者的用户名并消失
 		const $name = $(`<div>${theirName}</div>`).css('color', 'darkgoldenrod')
 			.css('opacity', '1')
