@@ -6,7 +6,6 @@ window.socket = socket
 const MIDI_CHANNEL = 0
 const MIDI_VOLUME = 127
 const shownKeys = new Set()
-const frontEndQueue = []
 
 // 进入页面时必须先输入用户名
 const handleName = () => {
@@ -57,23 +56,13 @@ const generatePiano = (keys, name) => {
 							// 防止乱弹
 							return
 						}
-						// 隐藏下落音符以反馈演奏者
-						$fallingTap.stop().animate({
-							opacity: '0',
-						}, 500, 'linear', () => {
-							$fallingTap.remove()
-						})
 
-						// TODO: 善用 lodash 和 id
-						// 更改 flag
-						for (let i = 0; i < frontEndQueue.length; i += 1) {
-							const hintObj = frontEndQueue[i]
-							if (hintObj.n === midiNum && !hintObj.flag) {
-								socket.emit('tap_hint', { ...hintObj, name })
-								frontEndQueue.splice(i, 1)
-								break
-							}
-						}
+						// 隐藏下落音符以反馈演奏者
+						$fallingTap.remove()
+
+						// 通过存在 DOM 里的 id 来改变后端 flag
+						const noteId = $fallingTap.data('id')
+						socket.emit('tap_hint', { id: noteId, name })
 					}
 				})
 				$pianoKey.tapend(() => {
@@ -132,7 +121,8 @@ const attachHintListener = (name) => socket.on('hint', ({ n, d, id }) => {
 		const note = notationToNote[MidiToNotation[n]]
 		const $key = $(`div[data-note=${note}]`)
 
-		const $fallingTap = $('<div class="tap"></div>')
+		// 将 id 存在 DOM 中
+		const $fallingTap = $(`<div class="tap" data-id="${id}"></div>`)
 		$fallingTap.css('height', d * 0.05) // 根据节奏调整持续时间
 		$fallingTap.css('opacity', 0.5)
 		if (d >= 500) {
@@ -146,8 +136,6 @@ const attachHintListener = (name) => socket.on('hint', ({ n, d, id }) => {
 		}, 4000, 'linear', () => {
 			$fallingTap.remove()
 		})
-
-		frontEndQueue.push({ n, d, id })
 	}
 })
 
@@ -166,7 +154,7 @@ const attachListeners = () => {
 	socket.on('note_on', (midiNum, theirName) => {
 		MIDI.noteOn(MIDI_CHANNEL, midiNum, MIDI_VOLUME, 0)
 		const note = notationToNote[MidiToNotation[midiNum]]
-		const $note = $(`div[data-note='${note}']`)
+		const $note = $(`div[data-note="${note}"]`)
 		// 添加其他人按下琴键时的反馈
 		$note.each((i, el) => {
 			$(el).addClass('their-note')
@@ -190,7 +178,7 @@ const attachListeners = () => {
 	socket.on('note_off', (midiNum) => {
 		// MIDI.noteOff(MIDI_CHANNEL, midiNum) // 不需要区分长按与点击
 		const note = notationToNote[MidiToNotation[midiNum]]
-		$(`div[data-note='${note}']`).each((i, el) => $(el).removeClass('their-note'))
+		$(`div[data-note="${note}"]`).each((i, el) => $(el).removeClass('their-note'))
 	})
 }
 

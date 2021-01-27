@@ -39,17 +39,19 @@ const playTrack = async (socket, track) => {
 		const { n, d } = track[i]
 		if (n) {
 			// 在 hint 的 4 秒内若按下了这个键，则更改 flag，服务器发送 note_on 的指令
-			const hintObj = { n, d, id: Math.random() }
+			const randomNum = Math.random()
+			const hintObj = { n, d, id: randomNum }
 			socket.broadcast.emit('hint', hintObj)
 
 			hintQueue.push(hintObj)
 			const timeoutId = setTimeout(() => {
-				// FIXME: shift 出来还是不太靠谱
-				const { flag, name } = hintQueue.shift()
-				console.log(flag, name)
-				if (flag) {
-					socket.emit('note_on', n, name)
+				const hintIndex = hintQueue.findIndex(({ id, flag }) => id === randomNum && flag)
+				if (hintIndex === -1) {
+					return
 				}
+				const { name } = hintQueue[hintIndex]
+				socket.emit('note_on', n, name)
+				hintQueue.splice(hintIndex, 1)
 				clearTimeout(timeoutId)
 			}, 4000)
 		}
@@ -68,7 +70,6 @@ io.on('connection', (socket) => {
 		Promise.all(allNotes.prelude.map((track) => playTrack(socket, track)))
 	})
 	socket.on('tap_hint', ({ id, name }) => {
-		// TODO: 善用 id
 		for (let i = 0; i < hintQueue.length; i += 1) {
 			const hintObj = hintQueue[i]
 			if (hintObj.id === id) {
