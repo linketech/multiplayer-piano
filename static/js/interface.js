@@ -6,7 +6,7 @@ window.socket = socket
 const MIDI_CHANNEL = 0
 const MIDI_VOLUME = 127
 const shownKeys = new Set()
-const hintQueue = []
+const frontEndQueue = []
 
 // 进入页面时必须先输入用户名
 const handleName = () => {
@@ -29,7 +29,7 @@ const generateKeyNote = (whiteKey, blackKey) => `<div class="piano-key">
 </div>`
 
 // 根据已选中复选框的值生成所需琴键
-const generatePiano = (keys) => {
+const generatePiano = (keys, name) => {
 	const $piano = $('.piano').first()
 	$piano.empty() // 清空状态以便重新生成
 	pianoKeys.forEach(({ white, black }) => {
@@ -49,8 +49,8 @@ const generatePiano = (keys) => {
 
 				$pianoKey.tapstart(() => {
 					$pianoKey.addClass('tapped-note')
-					if ($pianoKey.children('div.tap').length > 0) {
-						const $fallingTap = $pianoKey.children('div.tap').first()
+					if ($pianoKey.children('.tap').length > 0) {
+						const $fallingTap = $pianoKey.children('.tap').first()
 						const tapTop = $fallingTap.css('top').split('px').length
 							? Number($fallingTap.css('top').split('px')[0]) : -1
 						if (tapTop < 0) {
@@ -64,11 +64,13 @@ const generatePiano = (keys) => {
 							$fallingTap.remove()
 						})
 
+						// TODO: 善用 lodash 和 id
 						// 更改 flag
-						for (let index = 0; index < hintQueue.length; index += 1) {
-							const hint = hintQueue[index]
-							if (hint.n === midiNum && !hint.flag) {
-								hint.flag = true
+						for (let i = 0; i < frontEndQueue.length; i += 1) {
+							const hintObj = frontEndQueue[i]
+							if (hintObj.n === midiNum && !hintObj.flag) {
+								socket.emit('tap_hint', { ...hintObj, name })
+								frontEndQueue.splice(i, 1)
 								break
 							}
 						}
@@ -117,7 +119,7 @@ const generateCheckbox = (name) => {
 			} else {
 				shownKeys.delete(this.value)
 			}
-			generatePiano([...shownKeys])
+			generatePiano([...shownKeys], name)
 		})
 		$checkbox.appendTo($options)
 	})
@@ -125,10 +127,10 @@ const generateCheckbox = (name) => {
 }
 
 // 监听下落提示，需要在下落提示持续时间内按下琴键
-const attachHintListener = (name) => socket.on('hint', ({ n, d }) => {
+const attachHintListener = (name) => socket.on('hint', ({ n, d, id }) => {
 	if (n && name !== '观众') {
 		const note = notationToNote[MidiToNotation[n]]
-		const $key = $(`.piano-key div[data-note=${note}]`)
+		const $key = $(`div[data-note=${note}]`)
 
 		const $fallingTap = $('<div class="tap"></div>')
 		$fallingTap.css('height', d * 0.05) // 根据节奏调整持续时间
@@ -145,18 +147,7 @@ const attachHintListener = (name) => socket.on('hint', ({ n, d }) => {
 			$fallingTap.remove()
 		})
 
-		// 在 hint 的 4 秒内若按下了这个键，则更改 flag，向服务器发送 note_on 的指令
-		const hintObj = { n, flag: false }
-		hintQueue.push(hintObj)
-		const timeoutId = setTimeout(() => {
-			// 为测试延迟，先将 flag 注释掉
-			const { flag } = hintQueue.find((item) => item === hintObj)
-			// if (flag) {
-			socket.emit('note_on', n, name)
-			MIDI.noteOn(MIDI_CHANNEL, n, MIDI_VOLUME, 0)
-			// }
-			clearTimeout(timeoutId)
-		}, 4000)
+		frontEndQueue.push({ n, d, id })
 	}
 })
 
