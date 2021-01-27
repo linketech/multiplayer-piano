@@ -671,7 +671,15 @@ const allNotes = {
 	],
 }
 
-module.exports = { allNotes }
+const songToNotes = {
+	云宫迅音: 'prelude',
+	敢问路在何方: 'song',
+	完整曲目: 'allInOne',
+	吟唱1: 'arararar',
+	吟唱2: 'arararar2',
+}
+
+module.exports = { allNotes, songToNotes }
 
 // const playTrack = async (track, id) => {
 // 	const sleep = (t) => new Promise((rs) => setTimeout(rs, t))

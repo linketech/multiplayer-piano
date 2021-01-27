@@ -4,7 +4,7 @@ const http = require('http')
 const fs = require('fs')
 const express = require('express')
 const socketio = require('socket.io')
-const { allNotes } = require('./note')
+const { allNotes, songToNotes } = require('./note')
 
 const app = express()
 app.use('/static', express.static(`${__dirname}/static`))
@@ -65,9 +65,12 @@ const playTrack = async (socket, track) => {
 
 io.on('connection', (socket) => {
 	gameServer.addPlayer(socket)
-	socket.on('start', (music) => {
-		// TODO: 演奏多首曲子，加个复选框
-		Promise.all(allNotes.prelude.map((track) => playTrack(socket, track)))
+	socket.on('start', ([music]) => {
+		// 前端单选曲目，按 start 按钮触发
+		if (!music) {
+			return
+		}
+		Promise.all(allNotes[songToNotes[music]].map((track) => playTrack(socket, track)))
 	})
 	socket.on('tap_hint', ({ id, name }) => {
 		for (let i = 0; i < hintQueue.length; i += 1) {

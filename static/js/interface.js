@@ -15,8 +15,23 @@ const handleName = () => {
 	}
 	$('.username').append(name)
 	if (name === '观众') {
-		$('.start').css('display', 'block')
-			.tap(() => socket.emit('start'))
+		const songs = ['云宫迅音', '敢问路在何方', '完整曲目', '吟唱1', '吟唱2']
+		const songSet = new Set()
+		songs.forEach((song) => {
+			const checkbox = `<input type="radio" id="${song}" value="${song}">
+				<label for="${song}">${song}</label>
+				<br/>`
+			const $checkbox = $(checkbox)
+			$checkbox.change(function () {
+				if (this.checked) {
+					songSet.clear()
+					songSet.add(this.value)
+				}
+			})
+			$checkbox.appendTo($('.select-music'))
+		})
+		$('.select-music').css('display', 'block')
+		$('.start').tap(() => socket.emit('start', [...songSet]))
 	}
 	return name
 }
