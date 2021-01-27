@@ -72,18 +72,6 @@ const generatePiano = (keys) => {
 								break
 							}
 						}
-
-						// // 瞎加了一个反馈，以代替判断准确率
-						// const randomIndex = Math.floor(Math.random() * (congratulations.length))
-						// const congratulation = congratulations[randomIndex]
-						// const $congratulation = $(`<div>${congratulation}</div>`).css('color', 'darkgoldenrod')
-						// 	.css('opacity', '1')
-						// $congratulation.appendTo($pianoKey)
-						// $congratulation.animate({
-						// 	opacity: '0',
-						// }, 500, 'linear', () => {
-						// 	$congratulation.remove()
-						// })
 					}
 				})
 				$pianoKey.tapend(() => {
