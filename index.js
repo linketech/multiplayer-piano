@@ -192,7 +192,9 @@ const gameServer = new GameServer()
 
 app.get('/', (req, res) => fs.createReadStream('./views/index.html').pipe(res))
 
-socketio.listen(server).sockets.on('connection', (socket) => {
+socketio(server).on('connection', (socket) => {
+	// TODO: note_on 放在服务器触发
+	// 把前端判断 flag 的逻辑改到后端
 	gameServer.addPlayer(socket)
 	socket.on('note_on', (note, name) => socket.broadcast.emit('note_on', note, name))
 	socket.on('hint', (obj) => socket.broadcast.emit('hint', obj))

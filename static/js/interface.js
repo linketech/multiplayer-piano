@@ -67,7 +67,7 @@ const generatePiano = (keys) => {
 						// 更改 flag
 						for (let index = 0; index < hintQueue.length; index += 1) {
 							const hint = hintQueue[index]
-							if (hint.n === midiNum) {
+							if (hint.n === midiNum && !hint.flag) {
 								hint.flag = true
 								break
 							}
@@ -158,13 +158,15 @@ const attachHintListener = (name) => socket.on('hint', ({ n, d }) => {
 		})
 
 		// 在 hint 的 4 秒内若按下了这个键，则更改 flag，向服务器发送 note_on 的指令
-		hintQueue.push({ n, flag: false })
+		const hintObj = { n, flag: false }
+		hintQueue.push(hintObj)
 		const timeoutId = setTimeout(() => {
-			const { flag } = hintQueue.shift()
-			if (flag) {
-				socket.emit('note_on', n, name)
-			}
+			// 为测试延迟，先将 flag 注释掉
+			const { flag } = hintQueue.find((item) => item === hintObj)
+			// if (flag) {
+			socket.emit('note_on', n, name)
 			MIDI.noteOn(MIDI_CHANNEL, n, MIDI_VOLUME, 0)
+			// }
 			clearTimeout(timeoutId)
 		}, 4000)
 	}
