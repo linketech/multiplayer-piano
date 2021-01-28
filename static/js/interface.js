@@ -15,6 +15,7 @@ const handleName = () => {
 		name = prompt('输入你的大名：')
 	}
 	$('.username').append(name)
+
 	if (name === '观众') {
 		const songs = ['云宫迅音', '敢问路在何方', '完整曲目', '吟唱1', '吟唱2']
 		const $select = $('<select style="margin-top: 8px;"></select>')
@@ -49,10 +50,6 @@ const generatePiano = (keys, name) => {
 				const $pianoKey = $(pianoKey)
 				const note = $pianoKey.data('note')
 				const midiNum = notationToMidi[noteToNotation[note]]
-				// 避免长按选中文本
-				$pianoKey.children().bind('contextmenu', (e) => {
-					e.preventDefault()
-				})
 
 				$pianoKey.tapstart(() => {
 					$pianoKey.addClass('tapped-note')
@@ -88,13 +85,34 @@ const generatePiano = (keys, name) => {
 	})
 }
 
-// TODO: 改为观众可以随意弹奏，前端发声
-// 给观众生成的，只发声与显示按下的只读型钢琴
+// 给观众生成的，显示选曲且可以演奏的钢琴
 const generateFullPiano = () => {
 	const $piano = $('.piano').first()
 	pianoKeys.forEach(({ white, black }) => {
 		const keyNote = generateKeyNote(white.name, black.name)
-		$(keyNote).appendTo($piano)
+		const $keyNote = $(keyNote)
+		const blackWhiteDom = [...$keyNote.children()]
+		// 绑定触发器
+		blackWhiteDom.forEach((pianoKey) => {
+			const $pianoKey = $(pianoKey)
+			const note = $pianoKey.data('note')
+			const midiNum = notationToMidi[noteToNotation[note]]
+
+			$pianoKey.tapstart(() => {
+				socket.emit('note_on', midiNum, '')
+				$pianoKey.addClass('tapped-note')
+			})
+			$pianoKey.tapend(() => {
+				socket.emit('note_off', midiNum)
+				$pianoKey.removeClass('tapped-note')
+			})
+			$pianoKey.tapmove(() => {
+				socket.emit('note_off', midiNum)
+				$pianoKey.removeClass('tapped-note')
+			})
+		})
+
+		$keyNote.appendTo($piano)
 	})
 }
 
@@ -197,8 +215,4 @@ $(document).ready(() => {
 	generateCheckbox(name)
 	init(name)
 	attachListeners()
-	// 阻止长按选中文字
-	window.ontouchstart = (e) => {
-		e.preventDefault()
-	}
 })
