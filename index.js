@@ -65,7 +65,7 @@ const playTrack = async (socket, track) => {
 
 io.on('connection', (socket) => {
 	gameServer.addPlayer(socket)
-	socket.on('start', ([music]) => {
+	socket.on('start', (music) => {
 		// 前端单选曲目，按 start 按钮触发
 		if (!music) {
 			return

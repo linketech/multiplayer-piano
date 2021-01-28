@@ -11,27 +11,20 @@ const shownKeys = new Set()
 const handleName = () => {
 	let name = ''
 	while (!name) {
+		// eslint-disable-next-line no-alert
 		name = prompt('输入你的大名：')
 	}
 	$('.username').append(name)
 	if (name === '观众') {
 		const songs = ['云宫迅音', '敢问路在何方', '完整曲目', '吟唱1', '吟唱2']
-		const songSet = new Set()
+		const $select = $('<select style="margin-top: 8px;"></select>')
 		songs.forEach((song) => {
-			const checkbox = `<input type="radio" id="${song}" value="${song}">
-				<label for="${song}">${song}</label>
-				<br/>`
-			const $checkbox = $(checkbox)
-			$checkbox.change(function () {
-				if (this.checked) {
-					songSet.clear()
-					songSet.add(this.value)
-				}
-			})
-			$checkbox.appendTo($('.select-music'))
+			const option = `<option value="${song}">${song}</option>`
+			$(option).appendTo($select)
 		})
 		$('.select-music').css('display', 'block')
-		$('.start').tap(() => socket.emit('start', [...songSet]))
+		$select.appendTo($('.select-music'))
+		$('.start').tap(() => socket.emit('start', $('select').val()))
 	}
 	return name
 }
@@ -95,6 +88,7 @@ const generatePiano = (keys, name) => {
 	})
 }
 
+// TODO: 改为观众可以随意弹奏，前端发声
 // 给观众生成的，只发声与显示按下的只读型钢琴
 const generateFullPiano = () => {
 	const $piano = $('.piano').first()
@@ -116,8 +110,9 @@ const generateCheckbox = (name) => {
 			<label for="${note}">${note}</label>
 			<br/>`
 		const $checkbox = $(checkbox)
-		// 通过复选与否来生成琴键
+		// eslint-disable-next-line func-names
 		$checkbox.change(function () {
+			// 通过复选与否来生成琴键
 			if (this.checked) {
 				shownKeys.add(this.value)
 			} else {
