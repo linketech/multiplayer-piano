@@ -5,12 +5,11 @@ const socket = io.connect() // socket.io
 window.socket = socket
 const MIDI_CHANNEL = 0
 const MIDI_VOLUME = 127
-const shownKeys = new Set()
 
 // 进入页面时必须先输入用户名
 const handleName = () => {
 	let name = ''
-	while (!name) {
+	while (!name || names.indexOf(name) === -1) {
 		// eslint-disable-next-line no-alert
 		name = prompt('输入你的大名：')
 	}
@@ -118,35 +117,20 @@ const generateFullPiano = () => {
 
 const generateCheckbox = (name) => {
 	if (name === '观众') {
-		generateFullPiano()
-		return
+		return generateFullPiano()
 	}
-	const $options = $('<div class="options"></div>')
-	// 根据谱子中出现的音符来生成选项
-	Object.keys(noteToNotation).forEach((note) => {
-		const checkbox = `<input type="checkbox" id="${note}" value="${note}">
-			<label for="${note}">${note}</label>
-			<br/>`
-		const $checkbox = $(checkbox)
-		// eslint-disable-next-line func-names
-		$checkbox.change(function () {
-			// 通过复选与否来生成琴键
-			if (this.checked) {
-				shownKeys.add(this.value)
-			} else {
-				shownKeys.delete(this.value)
-			}
-			generatePiano([...shownKeys], name)
-		})
-		$checkbox.appendTo($options)
-	})
-	$options.appendTo($('footer'))
+
+	const nameIndex = names.indexOf(name)
+	const taskIndex = distribution.indexOf(nameIndex)
+	const ownTask = task[taskIndex]
+		.map((midi) => notationToNote[midiToNotation[midi]])
+	return generatePiano(ownTask, name)
 }
 
 // 监听下落提示，需要在下落提示持续时间内按下琴键
 const attachHintListener = (name) => socket.on('hint', ({ n, d, id }) => {
 	if (n && name !== '观众') {
-		const note = notationToNote[MidiToNotation[n]]
+		const note = notationToNote[midiToNotation[n]]
 		const $key = $(`div[data-note=${note}]`)
 
 		// 将 id 存在 DOM 中
@@ -181,7 +165,7 @@ const attachListeners = () => {
 	// 接收到其他人按下琴键的广播
 	socket.on('note_on', (midiNum, theirName) => {
 		MIDI.noteOn(MIDI_CHANNEL, midiNum, MIDI_VOLUME, 0)
-		const note = notationToNote[MidiToNotation[midiNum]]
+		const note = notationToNote[midiToNotation[midiNum]]
 		const $note = $(`div[data-note="${note}"]`)
 		// 添加其他人按下琴键时的反馈
 		$note.each((i, el) => {
@@ -205,7 +189,7 @@ const attachListeners = () => {
 	// 接收到其他人松开琴键的广播
 	socket.on('note_off', (midiNum) => {
 		// MIDI.noteOff(MIDI_CHANNEL, midiNum) // 不需要区分长按与点击
-		const note = notationToNote[MidiToNotation[midiNum]]
+		const note = notationToNote[midiToNotation[midiNum]]
 		$(`div[data-note="${note}"]`).each((i, el) => $(el).removeClass('their-note'))
 	})
 }
