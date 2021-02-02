@@ -4,7 +4,9 @@ const http = require('http')
 const fs = require('fs')
 const express = require('express')
 const socketio = require('socket.io')
+
 const { allNotes, songToNotes } = require('./note')
+const { notationToNote, midiToNotation } = require('./static/js/note-map')
 
 const app = express()
 app.use('/static', express.static(`${__dirname}/static`))
@@ -47,6 +49,10 @@ const playTrack = async (socket, track) => {
 			const timeoutId = setTimeout(() => {
 				const hintIndex = hintQueue.findIndex(({ id, flag }) => id === randomNum && flag)
 				if (hintIndex === -1) {
+					const missIndex = hintQueue.findIndex(({ id, flag }) => id === randomNum && !flag)
+					const missHint = hintQueue[missIndex]
+					const note = notationToNote[midiToNotation[missHint.n]]
+					console.log(`Missed note: ${note}`)
 					return
 				}
 				const { name } = hintQueue[hintIndex]

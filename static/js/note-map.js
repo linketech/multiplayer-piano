@@ -234,3 +234,7 @@ function randomDistribute(n = 14) {
 }
 
 distribution = [2, 6, 9, 13, 1, 4, 7, 10, 11, 5, 12, 0, 3, 8]
+
+if (module) {
+	module.exports = { notationToMidi, midiToNotation, notationToNote, noteToNotation }
+}
