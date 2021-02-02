@@ -9,7 +9,7 @@ const MIDI_VOLUME = 127
 // 进入页面时必须先输入用户名
 const handleName = () => {
 	let name = ''
-	while (!name || names.indexOf(name) === -1) {
+	while (!name || names.indexOf(name) === -1 || name !== '观众') {
 		// eslint-disable-next-line no-alert
 		name = prompt('输入你的大名：')
 	}
