@@ -184,7 +184,7 @@ div.tapped-note {
     /* padding-bottom: 2%;
     padding-left: 2.5%;
     padding-right: 2.5%; */
-    margin-bottom: 16px;
+    /* margin-bottom: 16px; */
 }
 .rotated {
     transform: rotate(180deg);
@@ -225,10 +225,46 @@ div.tapped-note {
     text-align: center;
 }
 
+/* 名字与选歌 */
 footer {
     display: flex;
     justify-content: space-around;
+    margin-top: 8px;
 }
 .select-music {
     display: none;
+}
+
+/* 歌词 */
+.lyric-container {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-box-align: center;
+    -webkit-user-select: none;
+}
+.lyric {
+    display: -webkit-box;
+    -webkit-box-orient: horizontal;
+    -webkit-box-align: center;
+    font: normal normal bold 60px 微软雅黑, sans-serif;
+    filter: brightness(2);
+}
+.lyric p {
+    background-image: 
+        /* 添加从上到下的灰度渐变 */
+        -webkit-linear-gradient(
+            top,
+            rgba(255, 255, 255, 0.5) 0%,
+            rgba(255, 255, 255, 0) 100%),
+        /* 背景色推进效果，js 改变第一个百分数来控制进度 */
+        -webkit-linear-gradient(left, #f00 0%, #00f 0%);
+    /* 使背景不显示在文字之外以实现镂空字体 */
+    background-clip: text;
+    -webkit-background-clip: text;
+    /* 设置对象中的文字填充颜色以实现镂空字体 */
+    -webkit-text-fill-color: transparent;
+    /* 设置文字的 border */
+    /* -webkit-text-stroke: 1px #f00; */
+    /* 这个滤镜相当于加了阴影 */
+    /* filter: drop-shadow(0px 0px 1px #f00); */
 }

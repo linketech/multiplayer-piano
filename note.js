@@ -200,6 +200,48 @@ const session036163 = [
 	{ n: N['6'], d: D.Quarter },
 	{ n: N['3'], d: D.Quarter },
 ]
+
+const lyricsDots = [
+	{ d: D.Quarter },
+	{ l: '·', d: D.Quarter },
+	{ l: '·', d: D.Quarter },
+	{ l: '·', d: D.Quarter },
+]
+const lyricsArArArAr = [
+	{ d: D.Quarter },
+	{ l: '啊', d: D.Quarter },
+	{ l: '啊', d: D['Quarter.5'] },
+	{ l: '啊', d: D.Eighth },
+	{ l: '啊', d: D.Quarter },
+	{ l: '，', d: D['3/4'] },
+]
+const lyricsArArArArArArArAr = [
+	{ d: D.Quarter },
+	{ l: '啊', d: D.Quarter },
+	{ l: '啊', d: D.Quarter },
+	{ l: '啊', d: D.Quarter },
+	{ l: '啊', d: D['3/4'] },
+	{ l: '啊', d: D.Quarter },
+	{ l: '啊', d: D['3/4'] },
+	{ l: '啊', d: D.Quarter },
+	{ l: '啊', d: D.Quarter },
+	{ l: '，', d: D['3/4'] },
+]
+const preludeLyrics = [
+	{ d: D.Whole * 7 },
+	...lyricsDots,
+	...lyricsArArArAr,
+	...lyricsArArArAr,
+	...lyricsArArArArArArArAr,
+	{ d: D.Whole * 15 },
+	...lyricsDots,
+	...lyricsArArArAr,
+	...lyricsArArArAr,
+	...lyricsArArArArArArArAr,
+	...lyricsArArArAr,
+	...lyricsArArArAr,
+	...lyricsArArArArArArArAr,
+]
 const preludeTrack2 = [
 	{ d: D.Half * 15 },
 	...session036163,
@@ -227,6 +269,8 @@ const preludeTrack2 = [
 	{ n: N['4*'], d: D.Quarter },
 
 	{ n: N['3*'], d: D.Whole },
+
+	...preludeLyrics,
 ]
 
 // track3
@@ -662,7 +706,7 @@ const songTrack2 = [
 const songLyrics = [
 	{ d: D.Whole },
 	{ d: D.Whole },
-	{ d: D.Whole },
+	...lyricsDots,
 
 	{ l: '你', d: D.Half },
 	{ l: '加', d: D['Quarter.5'] },
@@ -716,10 +760,11 @@ const songLyrics = [
 	{ l: '，', d: D.Half },
 	{ l: '啦', d: D.Quarter },
 
-	{ l: '啦', d: D.Half },
+	{ l: '啦', d: D['3/4'] },
 	{ l: '啦', d: D.Eighth },
 	{ l: '啦', d: D.Eighth },
-	{ l: '啦', d: D.Quarter },
+	{ l: '啦', d: D['Quarter.5'] },
+	{ l: '啦', d: D.Eighth },
 	{ l: '啦', d: D.Eighth },
 	{ l: '啦', d: D.Eighth },
 	{ l: '啦', d: D.Quarter },
@@ -776,13 +821,23 @@ const songLyrics = [
 	{ l: '。', d: D['Whole*2'] - D.Quarter },
 ]
 
+const toGreeting = (words) => words.split('').map((l) => ({ l, d: D.Quarter }))
+const greeting = [
+	...lyricsDots,
+	...toGreeting('2021年，立足新起点，踏上新征程，开创新辉煌'),
+	{ l: '，', d: D.Half },
+	...toGreeting('祝大家在牛年里，牛转乾坤、牛转新机、牛转新运'),
+	{ l: '~', d: D.Half },
+	...toGreeting('谢谢大家'),
+]
+
 const allNotes = {
 	prelude: [preludeTrack1, preludeTrack2, preludeTrack3],
 	song: [songTrack1, songTrack2, songLyrics],
 	allInOne: [
 		[...preludeTrack1, ...songTrack1],
-		preludeTrack2,
-		[...preludeTrack3, ...songTrack2, ...songLyrics],
+		[...preludeTrack2, { d: D.Whole * 7 }, ...songLyrics, ...greeting],
+		[...preludeTrack3, ...songTrack2],
 	],
 	arararar: [session0321302172043254323, sessionArArArAr],
 	arararar2: [

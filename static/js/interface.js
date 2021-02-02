@@ -6,6 +6,8 @@ window.socket = socket
 const MIDI_CHANNEL = 0
 const MIDI_VOLUME = 127
 
+const sleep = (t) => new Promise((rs) => setTimeout(rs, t))
+
 // 进入页面时必须先输入用户名
 const handleName = () => {
 	let name = ''
@@ -115,7 +117,7 @@ const generateFullPiano = () => {
 	})
 }
 
-const generateCheckbox = (name) => {
+const generatePianoByTask = (name) => {
 	if (name === '观众') {
 		return generateFullPiano()
 	}
@@ -127,10 +129,46 @@ const generateCheckbox = (name) => {
 	return generatePiano(ownTask, name)
 }
 
+// 传入歌词 hint，生成 DOM 元素，在 4s 后推进，在遇到标点后移除
+const animateStep = 30
+const line = []
+const punctuation = ['，', '。', '！', '？', '~']
+async function generateLyric({ l, d }) {
+	const $root = $('.lyric').first()
+	const $p = $(`<p>${l}</p>`)
+	$p.appendTo($root)
+	await sleep(4000)
+	const count = d / animateStep
+	let process = 0
+	for (let i = 0; i < count; i += 1) {
+		// eslint-disable-next-line no-await-in-loop
+		await sleep(animateStep)
+
+		process += animateStep
+		$p.css('background-image', `
+			-webkit-linear-gradient(
+				top,
+				rgba(255,255,255,0.5) 0%,
+				rgba(255,255,255,0) 100%),
+			-webkit-linear-gradient(left, #f00 ${process}%, #00f 0%)`)
+	}
+	line.push($p)
+	if (punctuation.includes(l)) {
+		line.forEach(($l) => {
+			$l.remove()
+		})
+	}
+}
+
 // 监听下落提示，需要在下落提示持续时间内按下琴键
-const attachHintListener = (name) => socket.on('hint', ({ n, d, id }) => {
-	if (n && name !== '观众') {
+const attachHintListener = (name) => socket.on('hint', ({ n, d, id, l }) => {
+	if (l) {
+		generateLyric({ l, d })
+	} else if (n && name !== '观众') {
+		// socket.emit('tap_hint', { id, name }) // 自动弹奏
+
 		const note = notationToNote[midiToNotation[n]]
+		// FIXME: 找不到半音 DOM
 		const $key = $(`div[data-note=${note}]`)
 
 		// 将 id 存在 DOM 中
@@ -196,7 +234,7 @@ const attachListeners = () => {
 
 $(document).ready(() => {
 	const name = handleName()
-	generateCheckbox(name)
+	generatePianoByTask(name)
 	init(name)
 	attachListeners()
 })

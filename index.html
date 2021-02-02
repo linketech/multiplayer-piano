@@ -183,7 +183,7 @@
       */
       var _processL = function (words) {
         var _eps = addWords(words);
-        // clearTimeout(timer); //清除上一行因为页面渲染延迟没有处理完的定时器
+        clearTimeout(timer); //清除上一行因为页面渲染延迟没有处理完的定时器
         processWord(_eps, 0, 100 / Math.round(_eps[0].duration / step), 0, Math.round(_eps[0].offset / step), 0);
       }
 

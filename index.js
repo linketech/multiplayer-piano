@@ -39,20 +39,28 @@ const playTrack = async (socket, track) => {
 	let expectedElapse = 0
 	for (let i = 0; i < track.length; i += 1) {
 		const { n, d } = track[i]
-		if (n) {
-			// 在 hint 的 4 秒内若按下了这个键，则更改 flag，服务器发送 note_on 的指令
+		// 只要有 d 的都传给前端，具体 hint 由前端处理
+		if (d) {
 			const randomNum = Math.random()
-			const hintObj = { n, d, id: randomNum }
-			socket.broadcast.emit('hint', hintObj)
+			const hintObj = { ...track[i], id: randomNum }
+			// 观众也接收歌词，注意可能会有很多 miss 显示，改为 broadcast 可以 debug miss
+			// socket.broadcast.emit('hint', hintObj)
+			io.emit('hint', hintObj)
 
 			hintQueue.push(hintObj)
+			// 在 hint 的 4 秒内若按下了这个键，则更改 flag，服务器发送 note_on 的指令
 			const timeoutId = setTimeout(() => {
+				// 处理歌词
+				if (!n) {
+					clearTimeout(timeoutId)
+					return
+				}
 				const hintIndex = hintQueue.findIndex(({ id, flag }) => id === randomNum && flag)
+				// 后端打印 miss
 				if (hintIndex === -1) {
-					const missIndex = hintQueue.findIndex(({ id, flag }) => id === randomNum && !flag)
-					const missHint = hintQueue[missIndex]
-					const note = notationToNote[midiToNotation[missHint.n]]
+					const note = notationToNote[midiToNotation[n]]
 					console.log(`Missed note: ${note}`)
+					clearTimeout(timeoutId)
 					return
 				}
 				const { name } = hintQueue[hintIndex]
