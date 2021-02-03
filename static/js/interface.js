@@ -28,6 +28,8 @@ const handleName = () => {
 		$select.appendTo($('.select-music'))
 		$('.start').tap(() => socket.emit('start', $('select').val()))
 	}
+
+	socket.emit('set_name', name)
 	return name
 }
 

@@ -1,5 +1,4 @@
 /* eslint-disable max-classes-per-file */
-const events = require('events')
 const http = require('http')
 const fs = require('fs')
 const express = require('express')
@@ -16,21 +15,9 @@ const io = socketio(server)
 const { PORT = 80 } = process.env
 server.listen(PORT, () => { console.log('listen on ', PORT) })
 
-class GameServer extends events.EventEmitter {
-	constructor() {
-		super()
-		this.count = 0
-	}
-
-	addPlayer() {
-		this.count += 1
-		console.log(`Adding player${this.count}`)
-	}
-}
-
-const gameServer = new GameServer()
-
 app.get('/', (req, res) => fs.createReadStream('./views/index.html').pipe(res))
+
+let isPlaying = false
 
 const hintQueue = []
 const sleep = (t) => new Promise((rs) => setTimeout(rs, t))
@@ -43,8 +30,7 @@ const playTrack = async (socket, track) => {
 		if (d) {
 			const randomNum = Math.random()
 			const hintObj = { ...track[i], id: randomNum }
-			// 观众也接收歌词，注意可能会有很多 miss 显示，改为 broadcast 可以 debug miss
-			// socket.broadcast.emit('hint', hintObj)
+			// 观众也接收歌词
 			io.emit('hint', hintObj)
 
 			hintQueue.push(hintObj)
@@ -78,13 +64,26 @@ const playTrack = async (socket, track) => {
 }
 
 io.on('connection', (socket) => {
-	gameServer.addPlayer(socket)
-	socket.on('start', (music) => {
+	socket.on('set_name', (name) => {
+		// eslint-disable-next-line no-param-reassign
+		socket.name = name
+		console.log(`${socket.name} connected.`)
+	})
+	socket.on('disconnect', () => {
+		console.log(`${socket.name} disconnected.`)
+	})
+	socket.on('start', async (music) => {
 		// 前端单选曲目，按 start 按钮触发
 		if (!music) {
 			return
 		}
-		Promise.all(allNotes[songToNotes[music]].map((track) => playTrack(socket, track)))
+		if (isPlaying) {
+			console.log('Music is playing!')
+			return
+		}
+		isPlaying = true
+		await Promise.all(allNotes[songToNotes[music]].map((track) => playTrack(socket, track)))
+		isPlaying = false
 	})
 	socket.on('tap_hint', ({ id, name }) => {
 		for (let i = 0; i < hintQueue.length; i += 1) {
