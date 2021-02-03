@@ -821,7 +821,7 @@ const songLyrics = [
 	{ l: '。', d: D['Whole*2'] - D.Quarter },
 ]
 
-const toGreeting = (words) => words.split('').map((l) => ({ l, d: D.Quarter }))
+const toGreeting = (words) => words.split('').map((l) => ({ l, d: D.Semiquaver + D.Eighth }))
 const greeting = [
 	...lyricsDots,
 	...toGreeting('2021年，立足新起点，踏上新征程，开创新辉煌'),

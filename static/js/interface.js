@@ -8,9 +8,15 @@ const MIDI_VOLUME = 127
 
 const sleep = (t) => new Promise((rs) => setTimeout(rs, t))
 
+function loadPageVar(sVar) {
+	// eslint-disable-next-line prefer-template
+	return decodeURI(window.location.search.replace(new RegExp('^(?:.*[&\\?]' + encodeURI(sVar).replace(/[\.\+\*]/g, '\\$&') + '(?:\\=([^&]*))?)?.*$', 'i'), '$1'))
+}
+
 // 进入页面时必须先输入用户名
 const handleName = () => {
 	let name = ''
+	name = loadPageVar('name')
 	while (!name || (name !== '观众' && names.indexOf(name) === -1)) {
 	// eslint-disable-next-line no-alert
 		name = prompt('输入你的大名：')
@@ -27,9 +33,31 @@ const handleName = () => {
 		$('.select-music').css('display', 'block')
 		$select.appendTo($('.select-music'))
 		$('.start').tap(() => socket.emit('start', $('select').val()))
+		$('.lyric').css('font-size', '64px')
+		socket.on('title', (song) => {
+			if (song) {
+				$('.title').text(`正在演奏：${song}`)
+			} else {
+				$('.title').text('')
+			}
+		})
 	}
 
 	socket.emit('set_name', name)
+	if (!loadPageVar('name')) {
+		window.location.search = `?name=${name}`
+	}
+
+	let timeId
+	socket.on('heartbeat', () => {
+		clearTimeout(timeId)
+		$('.traffic-light').css('color', 'limegreen')
+		timeId = setTimeout(() => {
+			$('.traffic-light').css('color', 'tomato')
+			clearTimeout(timeId)
+		}, 300)
+	})
+
 	return name
 }
 
@@ -134,7 +162,7 @@ const generatePianoByTask = (name) => {
 // 传入歌词 hint，生成 DOM 元素，在 4s 后推进，在遇到标点后移除
 const animateStep = 30
 const line = []
-const punctuation = ['，', '。', '！', '？', '~']
+const punctuation = ['，', '。', '！', '？', '、', '~']
 async function generateLyric({ l, d }) {
 	const $root = $('.lyric').first()
 	const $p = $(`<p>${l}</p>`)
@@ -170,8 +198,7 @@ const attachHintListener = (name) => socket.on('hint', ({ n, d, id, l }) => {
 		// socket.emit('tap_hint', { id, name }) // 自动弹奏
 
 		const note = notationToNote[midiToNotation[n]]
-		// FIXME: 找不到半音 DOM
-		const $key = $(`div[data-note=${note}]`)
+		const $key = $(`div[data-note="${note}"]`)
 
 		// 将 id 存在 DOM 中
 		const $fallingTap = $(`<div class="tap" data-id="${id}"></div>`)

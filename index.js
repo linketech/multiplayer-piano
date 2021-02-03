@@ -64,12 +64,16 @@ const playTrack = async (socket, track) => {
 }
 
 io.on('connection', (socket) => {
+	const intervalId = setInterval(() => {
+		socket.emit('heartbeat')
+	}, 100)
 	socket.on('set_name', (name) => {
 		// eslint-disable-next-line no-param-reassign
 		socket.name = name
 		console.log(`${socket.name} connected.`)
 	})
 	socket.on('disconnect', () => {
+		clearInterval(intervalId)
 		console.log(`${socket.name} disconnected.`)
 	})
 	socket.on('start', async (music) => {
@@ -82,7 +86,9 @@ io.on('connection', (socket) => {
 			return
 		}
 		isPlaying = true
+		io.emit('title', music)
 		await Promise.all(allNotes[songToNotes[music]].map((track) => playTrack(socket, track)))
+		io.emit('title', '')
 		isPlaying = false
 	})
 	socket.on('tap_hint', ({ id, name }) => {
