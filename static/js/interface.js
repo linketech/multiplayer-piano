@@ -14,18 +14,19 @@ function loadPageVar(sVar) {
 }
 
 // 进入页面时必须先输入用户名
+const vips = ['观众', '指挥']
 const handleName = () => {
 	let name = ''
 	name = loadPageVar('name')
-	while (!name || (name !== '观众' && names.indexOf(name) === -1)) {
+	while (!name || (!vips.includes(name) && names.indexOf(name) === -1)) {
 	// eslint-disable-next-line no-alert
 		name = prompt('输入你的大名：')
 	}
 	$('.username').append(name)
 
-	if (name === '观众') {
+	if (name === '指挥') {
 		const songs = ['云宫迅音', '敢问路在何方', '完整曲目', '吟唱1', '吟唱2']
-		const $select = $('<select style="margin-top: 8px;"></select>')
+		const $select = $('<select></select>')
 		songs.forEach((song) => {
 			const option = `<option value="${song}">${song}</option>`
 			$(option).appendTo($select)
@@ -34,13 +35,9 @@ const handleName = () => {
 		$select.appendTo($('.select-music'))
 		$('.start').tap(() => socket.emit('start', $('select').val()))
 		$('.lyric').css('font-size', '64px')
-		socket.on('title', (song) => {
-			if (song) {
-				$('.title').text(`正在演奏：${song}`)
-			} else {
-				$('.title').text('')
-			}
-		})
+	}
+	if (name === '观众') {
+		$('.lyric').css('font-size', '64px')
 	}
 
 	socket.emit('set_name', name)
@@ -148,7 +145,7 @@ const generateFullPiano = () => {
 }
 
 const generatePianoByTask = (name) => {
-	if (name === '观众') {
+	if (vips.includes(name)) {
 		return generateFullPiano()
 	}
 
@@ -180,7 +177,7 @@ async function generateLyric({ l, d }) {
 				top,
 				rgba(255,255,255,0.5) 0%,
 				rgba(255,255,255,0) 100%),
-			-webkit-linear-gradient(left, #f00 ${process}%, #00f 0%)`)
+			-webkit-linear-gradient(left, #f00 ${process}%, gold 0%)`)
 	}
 	line.push($p)
 	if (punctuation.includes(l)) {

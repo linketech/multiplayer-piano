@@ -86,9 +86,7 @@ io.on('connection', (socket) => {
 			return
 		}
 		isPlaying = true
-		io.emit('title', music)
 		await Promise.all(allNotes[songToNotes[music]].map((track) => playTrack(socket, track)))
-		io.emit('title', '')
 		isPlaying = false
 	})
 	socket.on('tap_hint', ({ id, name }) => {
