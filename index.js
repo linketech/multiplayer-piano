@@ -64,17 +64,18 @@ const playTrack = async (socket, track) => {
 }
 
 io.on('connection', (socket) => {
+	let playerName = '某个重连的人'
 	const intervalId = setInterval(() => {
 		socket.emit('heartbeat')
 	}, 100)
 	socket.on('set_name', (name) => {
 		// eslint-disable-next-line no-param-reassign
-		socket.name = name
-		console.log(`${socket.name} connected.`)
+		playerName = name
+		console.log(`${playerName} connected.`)
 	})
 	socket.on('disconnect', () => {
 		clearInterval(intervalId)
-		console.log(`${socket.name} disconnected.`)
+		console.log(`${playerName} disconnected.`)
 	})
 	socket.on('start', async (music) => {
 		// 前端单选曲目，按 start 按钮触发

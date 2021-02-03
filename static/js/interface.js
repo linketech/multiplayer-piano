@@ -35,9 +35,11 @@ const handleName = () => {
 		$select.appendTo($('.select-music'))
 		$('.start').tap(() => socket.emit('start', $('select').val()))
 		$('.lyric').css('font-size', '64px')
+		$('body').css('margin-top', '280px')
 	}
 	if (name === '观众') {
 		$('.lyric').css('font-size', '64px')
+		$('body').css('margin-top', '280px')
 	}
 
 	socket.emit('set_name', name)
@@ -48,6 +50,9 @@ const handleName = () => {
 	let timeId
 	socket.on('heartbeat', () => {
 		clearTimeout(timeId)
+		if ($('.traffic-light').css('color') === 'rgb(255, 99, 71)') {
+			socket.emit('set_name', `重连的${name}`)
+		}
 		$('.traffic-light').css('color', 'limegreen')
 		timeId = setTimeout(() => {
 			$('.traffic-light').css('color', 'tomato')
