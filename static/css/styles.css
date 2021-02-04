@@ -76,6 +76,7 @@ div.tapped-note {
     position: relative;
     color: gray;
     text-align: center;
+    overflow: hidden;
 }
 .piano-key__black {
     display: flex;
@@ -94,6 +95,7 @@ div.tapped-note {
     z-index: 1;
     color: silver;
     text-align: center;
+    overflow: hidden;
 }
 
 /* 名字与选歌 */
