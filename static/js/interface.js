@@ -14,7 +14,8 @@ function loadPageVar(sVar) {
 }
 
 // 进入页面时必须先输入用户名
-const vips = ['观众', '指挥']
+const vvips = ['高音', '低音']
+const vips = ['观众', '指挥', ...vvips]
 const handleName = () => {
 	let name = ''
 	const originName = loadPageVar('name')
@@ -146,6 +147,9 @@ const generateFullPiano = () => {
 }
 
 const generatePianoByTask = (name) => {
+	if (vvips.includes(name)) {
+		return generatePiano(Object.values(midiToNote), name)
+	}
 	if (vips.includes(name)) {
 		return generateFullPiano()
 	}
