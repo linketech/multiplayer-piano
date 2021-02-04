@@ -864,7 +864,7 @@ module.exports = { allNotes, songToNotes }
 // 		const { n, d } = track[i]
 // 		if (n) {
 // 			this.socket.emit('hint', track[i], `track${id}`)
-// 			setTimeout(() => this.socket.emit('note_on', n, `track${id}`), D['Whole*2'])
+// 			setTimeout(() => this.socket.emit('note_on', n), D['Whole*2'])
 // 		}
 // 		expectedElapse += d
 // 		const totalElapse = Date.now() - start

@@ -1,5 +1,5 @@
+/* eslint-disable no-useless-escape */
 /* eslint-disable no-undef */
-/* eslint-disable consistent-return */
 
 const socket = io.connect() // socket.io
 window.socket = socket
@@ -17,39 +17,23 @@ function loadPageVar(sVar) {
 const vips = ['观众', '指挥']
 const handleName = () => {
 	let name = ''
-	name = loadPageVar('name')
+	const originName = loadPageVar('name')
+	name = originName
 	while (!name || (!vips.includes(name) && names.indexOf(name) === -1)) {
 	// eslint-disable-next-line no-alert
-		name = prompt('输入你的大名：')
+		name = prompt('亮出你的身份：')
 	}
 	$('.username').append(name)
 
-	if (name === '指挥') {
-		const songs = ['云宫迅音', '敢问路在何方', '完整曲目', '吟唱1', '吟唱2']
-		const $select = $('<select></select>')
-		songs.forEach((song) => {
-			const option = `<option value="${song}">${song}</option>`
-			$(option).appendTo($select)
-		})
-		$('.select-music').css('display', 'block')
-		$select.appendTo($('.select-music'))
-		$('.start').tap(() => socket.emit('start', $('select').val()))
-		$('.lyric').css('font-size', '64px')
-		$('body').css('margin-top', '280px')
-	}
-	if (name === '观众') {
-		$('.lyric').css('font-size', '64px')
-		$('body').css('margin-top', '280px')
-	}
-
 	socket.emit('set_name', name)
-	if (!loadPageVar('name')) {
+	if (!originName) {
 		window.location.search = `?name=${name}`
 	}
 
 	let timeId
 	socket.on('heartbeat', () => {
 		clearTimeout(timeId)
+		// 0.3s 内未收到后端发的心跳，则显示断线
 		if ($('.traffic-light').css('color') === 'rgb(255, 99, 71)') {
 			socket.emit('set_name', `重连的${name}`)
 		}
@@ -63,6 +47,25 @@ const handleName = () => {
 	return name
 }
 
+const handleVip = (name) => {
+	if (name === '指挥') {
+		const songs = ['完整曲目', '云宫迅音', '敢问路在何方']
+		const $select = $('<select></select>')
+		songs.forEach((song) => {
+			const option = `<option value="${song}">${song}</option>`
+			$(option).appendTo($select)
+		})
+		$('.select-music').css('display', 'block')
+		$select.appendTo($('.select-music'))
+		$('.start').tap(() => socket.emit('start', $('select').val()))
+	}
+	if (vips.includes(name)) {
+		// FIXME: 只有指挥发声，观众听不到演奏
+		$('.lyric').css('font-size', '64px')
+		$('body').css('margin-top', '80px')
+	}
+}
+
 // 用于生成 dom
 const generateKeyNote = (whiteKey, blackKey) => `<div class="piano-key">
 		<div class="piano-key__white" data-note="${whiteKey}"><span class="piano-note">${whiteKey}</span></div>
@@ -72,7 +75,6 @@ const generateKeyNote = (whiteKey, blackKey) => `<div class="piano-key">
 // 根据已选中复选框的值生成所需琴键
 const generatePiano = (keys, name) => {
 	const $piano = $('.piano').first()
-	$piano.empty() // 清空状态以便重新生成
 	pianoKeys.forEach(({ white, black }) => {
 		if (keys.includes(white.name) || keys.includes(black.name)) {
 			const keyNote = generateKeyNote(white.name, black.name)
@@ -81,15 +83,14 @@ const generatePiano = (keys, name) => {
 			// 绑定触发器
 			blackWhiteDom.forEach((pianoKey) => {
 				const $pianoKey = $(pianoKey)
-				const note = $pianoKey.data('note')
-				const midiNum = notationToMidi[noteToNotation[note]]
 
 				$pianoKey.tapstart(() => {
 					$pianoKey.addClass('tapped-note')
 					if ($pianoKey.children('.tap').length > 0) {
 						const $fallingTap = $pianoKey.children('.tap').first()
 						const tapTop = $fallingTap.css('top').split('px').length
-							? Number($fallingTap.css('top').split('px')[0]) : -1
+							? Number($fallingTap.css('top').split('px')[0])
+							: -1
 						if (tapTop < 0) {
 							// 防止乱弹
 							return
@@ -104,11 +105,9 @@ const generatePiano = (keys, name) => {
 					}
 				})
 				$pianoKey.tapend(() => {
-					socket.emit('note_off', midiNum)
 					$pianoKey.removeClass('tapped-note')
 				})
 				$pianoKey.tapmove(() => {
-					socket.emit('note_off', midiNum)
 					$pianoKey.removeClass('tapped-note')
 				})
 			})
@@ -136,11 +135,9 @@ const generateFullPiano = () => {
 				$pianoKey.addClass('tapped-note')
 			})
 			$pianoKey.tapend(() => {
-				socket.emit('note_off', midiNum)
 				$pianoKey.removeClass('tapped-note')
 			})
 			$pianoKey.tapmove(() => {
-				socket.emit('note_off', midiNum)
 				$pianoKey.removeClass('tapped-note')
 			})
 		})
@@ -169,7 +166,7 @@ async function generateLyric({ l, d }) {
 	const $root = $('.lyric').first()
 	const $p = $(`<p>${l}</p>`)
 	$p.appendTo($root)
-	await sleep(4000)
+	await sleep(4000) // 保证发音时与歌词同步
 	const count = d / animateStep
 	let process = 0
 	for (let i = 0; i < count; i += 1) {
@@ -220,7 +217,7 @@ const attachHintListener = (name) => socket.on('hint', ({ n, d, id, l }) => {
 	}
 })
 
-const init = (name) => MIDI.loadPlugin({
+const initMidi = (name) => MIDI.loadPlugin({
 	soundfontUrl: '/static/soundfonts/',
 	instrument: 'acoustic_grand_piano',
 	callback() {
@@ -265,7 +262,8 @@ const attachListeners = () => {
 
 $(document).ready(() => {
 	const name = handleName()
+	handleVip(name)
 	generatePianoByTask(name)
-	init(name)
+	initMidi(name)
 	attachListeners()
 })
