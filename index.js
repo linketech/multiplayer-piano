@@ -6,6 +6,7 @@ const socketIo = require('socket.io')
 
 const { allNotes, songToNotes } = require('./note')
 const { notationToNote, midiToNotation } = require('./static/js/note-map')
+const { theKing } = require('./theKingCalledMeToPatrolMountains')
 
 const app = express()
 app.use('/static', express.static(`${__dirname}/static`))
@@ -83,6 +84,8 @@ io.on('connection', (socket) => {
 		if (!music) {
 			return
 		}
+		allNotes.theKing = theKing
+		songToNotes['大王叫我来巡山'] = 'theKing'
 		if (isPlaying) {
 			// 简单的锁，防止误触
 			console.log('Music is playing!')

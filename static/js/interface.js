@@ -49,7 +49,7 @@ const handleName = () => {
 
 const handleVip = (name) => {
 	if (name === '指挥') {
-		const songs = ['完整曲目', '云宫迅音', '敢问路在何方']
+		const songs = ['完整曲目', '云宫迅音', '敢问路在何方', '大王叫我来巡山']
 		const $select = $('<select></select>')
 		songs.forEach((song) => {
 			const option = `<option value="${song}">${song}</option>`
@@ -60,7 +60,6 @@ const handleVip = (name) => {
 		$('.start').tap(() => socket.emit('start', $('select').val()))
 	}
 	if (vips.includes(name)) {
-		// FIXME: 只有指挥发声，观众听不到演奏
 		$('.lyric').css('font-size', '64px')
 		$('body').css('margin-top', '80px')
 	}
