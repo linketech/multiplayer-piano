@@ -41,7 +41,7 @@ const handleName = () => {
 		timeId = setTimeout(() => {
 			$('.traffic-light').css('color', 'tomato')
 			clearTimeout(timeId)
-		}, 300)
+		}, 1000)
 	})
 
 	return name
@@ -75,8 +75,8 @@ const generateKeyNote = (whiteKey, blackKey) => `<div class="piano-key">
 const generatePiano = (keys, name) => {
 	const $piano = $('.piano').first()
 	pianoKeys.forEach(({ white, black }) => {
-		if (keys.includes(white.name) || keys.includes(black.name)) {
-			const keyNote = generateKeyNote(white.name, black.name)
+		if (keys.includes(white.note) || keys.includes(black.note)) {
+			const keyNote = generateKeyNote(white.note, black.note)
 			const $keyNote = $(keyNote)
 			const blackWhiteDom = [...$keyNote.children()]
 			// 绑定触发器
@@ -120,14 +120,14 @@ const generatePiano = (keys, name) => {
 const generateFullPiano = () => {
 	const $piano = $('.piano').first()
 	pianoKeys.forEach(({ white, black }) => {
-		const keyNote = generateKeyNote(white.name, black.name)
+		const keyNote = generateKeyNote(white.note, black.note)
 		const $keyNote = $(keyNote)
 		const blackWhiteDom = [...$keyNote.children()]
 		// 绑定触发器
 		blackWhiteDom.forEach((pianoKey) => {
 			const $pianoKey = $(pianoKey)
 			const note = $pianoKey.data('note')
-			const midiNum = notationToMidi[noteToNotation[note]]
+			const midiNum = R.invertObj(midiToNote)[note]
 
 			$pianoKey.tapstart(() => {
 				socket.emit('note_on', midiNum, '')
@@ -153,7 +153,7 @@ const generatePianoByTask = (name) => {
 	const nameIndex = names.indexOf(name)
 	const taskIndex = distribution.indexOf(nameIndex)
 	const ownTask = task[taskIndex]
-		.map((midi) => notationToNote[midiToNotation[midi]])
+		.map((midi) => R.invertObj(midiToNote)[midi])
 	return generatePiano(ownTask, name)
 }
 
@@ -195,7 +195,7 @@ const attachHintListener = (name) => socket.on('hint', ({ n, d, id, l }) => {
 	} else if (n && name !== '观众') {
 		// socket.emit('tap_hint', { id, name }) // 自动弹奏
 
-		const note = notationToNote[midiToNotation[n]]
+		const note = midiToNote[n]
 		const $key = $(`div[data-note="${note}"]`)
 
 		// 将 id 存在 DOM 中
@@ -230,7 +230,7 @@ const attachListeners = () => {
 	// 接收到其他人按下琴键的广播
 	socket.on('note_on', (midiNum, theirName) => {
 		MIDI.noteOn(MIDI_CHANNEL, midiNum, MIDI_VOLUME, 0)
-		const note = notationToNote[midiToNotation[midiNum]]
+		const note = midiToNote[midiNum]
 		const $note = $(`div[data-note="${note}"]`)
 		// 添加其他人按下琴键时的反馈
 		$note.each((i, el) => {
@@ -254,7 +254,7 @@ const attachListeners = () => {
 	// 接收到其他人松开琴键的广播
 	socket.on('note_off', (midiNum) => {
 		// MIDI.noteOff(MIDI_CHANNEL, midiNum) // 不需要区分长按与点击
-		const note = notationToNote[midiToNotation[midiNum]]
+		const note = midiToNote[midiNum]
 		$(`div[data-note="${note}"]`).each((i, el) => $(el).removeClass('their-note'))
 	})
 }

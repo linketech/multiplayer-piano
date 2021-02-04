@@ -5,7 +5,7 @@ const express = require('express')
 const socketIo = require('socket.io')
 
 const { allNotes, songToNotes } = require('./note')
-const { notationToNote, midiToNotation } = require('./static/js/note-map')
+const { midiToNote } = require('./static/js/piano-keys')
 const { theKing } = require('./theKingCalledMeToPatrolMountains')
 
 const app = express()
@@ -45,7 +45,7 @@ const playTrack = async (socket, track) => {
 				const hintIndex = hintQueue.findIndex(({ id, flag }) => id === randomNum && flag)
 				// 后端打印 miss
 				if (hintIndex === -1) {
-					const note = notationToNote[midiToNotation[n]]
+					const note = midiToNote[n]
 					console.log(`Missed note: ${note}`)
 					clearTimeout(timeoutId)
 					return
@@ -70,7 +70,7 @@ io.on('connection', (socket) => {
 	// 检测是否保持连接
 	const intervalId = setInterval(() => {
 		socket.emit('heartbeat')
-	}, 100)
+	}, 500)
 	socket.on('set_name', (name) => {
 		playerName = name
 		console.log(`${playerName} connected.`)
