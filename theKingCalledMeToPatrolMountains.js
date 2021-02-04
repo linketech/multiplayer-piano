@@ -236,14 +236,14 @@ const createLyrics888844w = (a, b, c, d, e, f, g, h) => [
 	{ l: h, d: D['3/4'] },
 ]
 const sessionTrack3Climax = [
-	...createLyrics888844w(...'大王叫我来巡山，'.split('')),
+	...createLyrics888844w(...'大王叫我来巡山~'.split('')),
 	...createLyrics888844w(...'我把人间转一转，'.split('')),
 
 	...createLyrics888844(...'打起我的鼓，'.split('')),
 	...createLyrics888844(...'敲起我的锣，'.split('')),
 	...createLyrics888844w(...'生活充满节凑感。'.split('')),
 
-	...createLyrics888844w(...'大王叫我来巡山，'.split('')),
+	...createLyrics888844w(...'大王叫我来巡山~'.split('')),
 	...createLyrics888844(...'抓个和尚做晚'.split('')),
 	{ l: '餐', d: D.Quarter },
 	{ l: '，', d: D.Half },
@@ -303,8 +303,7 @@ const track3 = [
 	{ l: '美', d: D.Eighth },
 	{ l: '的', d: D.Eighth },
 	{ l: '花', d: D.Quarter },
-	{ l: '儿', d: D.Eighth },
-	{ l: '，', d: D.Eighth },
+	{ l: '，', d: D.Quarter },
 	...createLyrics888844w(...'献给我的小公举。'.split('')),
 
 	...sessionTrack3Climax,
