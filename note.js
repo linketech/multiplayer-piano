@@ -828,7 +828,7 @@ const greeting = [
 	{ l: '，', d: D.Half },
 	...toGreeting('祝大家在牛年里，牛转乾坤、牛转新机、牛转新运'),
 	{ l: '~', d: D.Half },
-	...toGreeting('谢谢大家'),
+	...toGreeting('谢谢大家。'),
 ]
 
 const allNotes = {
