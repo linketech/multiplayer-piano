@@ -153,7 +153,7 @@ const generatePianoByTask = (name) => {
 	const nameIndex = names.indexOf(name)
 	const taskIndex = distribution.indexOf(nameIndex)
 	const ownTask = task[taskIndex]
-		.map((midi) => R.invertObj(midiToNote)[midi])
+		.map((midi) => midiToNote[midi])
 	return generatePiano(ownTask, name)
 }
 
