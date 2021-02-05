@@ -52,7 +52,7 @@ const playTrack = async (socket, track) => {
 				}
 				const { name } = hintQueue[hintIndex]
 				// 演奏时如果不用 broadcast 的话，观众就听不到
-				socket.emit('note_on', n, name)
+				socket.broadcast.emit('note_on', n, name)
 				hintQueue.splice(hintIndex, 1)
 				clearTimeout(timeoutId)
 			}, 4000)
